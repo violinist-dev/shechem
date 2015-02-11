@@ -1,0 +1,5 @@
+; $Id: form_builder_examples.info,v 1.3 2011/01/07 22:57:53 quicksketch Exp $
+name = Form builder examples
+description = Form builder support for CCK, Webform, and Profile modules.
+core = 7.x
+dependencies[] = form_builder

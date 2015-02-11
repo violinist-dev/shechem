@@ -1,0 +1,39 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install, update and uninstall functions for the gardens_features module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function gardens_features_install() {
+  // Adjust the weight of the module so it runs after most others.
+  db_update('system')
+    ->fields(array(
+      'weight' => 10,
+    ))
+    ->condition('name', 'gardens_features')
+    ->execute();
+}
+
+/**
+ * Adjust the weight of the module so it runs after most others.
+ */
+function gardens_features_update_7000() {
+  db_update('system')
+    ->fields(array(
+      'weight' => 10,
+    ))
+    ->condition('name', 'gardens_features')
+    ->execute();
+}
+/**
+ * Override some default media variables
+ */
+
+function gardens_features_update_7001() {
+  variable_set('wysiwyg_allowed_types', array('image', 'video'));
+}

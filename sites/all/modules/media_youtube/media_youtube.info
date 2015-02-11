@@ -1,0 +1,11 @@
+; $Id: media_youtube.info,v 1.1.4.5 2011/01/05 15:47:28 aaron Exp $
+
+name = Media: YouTube
+description = Provides YouTube support to the Media module.
+package = "Media"
+core = 7.x
+files[] = media_youtube.module
+files[] = MediaYouTubeStreamWrapper.inc
+files[] = media_youtube.admin.inc
+files[] = includes/media_youtube.styles.inc
+dependencies[] = media_internet

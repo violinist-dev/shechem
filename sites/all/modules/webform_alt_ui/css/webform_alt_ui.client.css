@@ -1,0 +1,9 @@
+/* $Id: webform_alt_ui.client.css,v 1.1 2011/01/11 17:19:44 drothstein Exp $ */
+
+.webform-client-form .form-actions input + input {
+  margin-left: 10px;
+}
+
+.webform-client-form input {
+  max-width: 98%;
+}

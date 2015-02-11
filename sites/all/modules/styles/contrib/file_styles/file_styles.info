@@ -1,0 +1,10 @@
+; $Id: file_styles.info,v 1.1.2.3 2010/04/07 11:42:14 JacobSingh Exp $
+
+name = File Styles
+description = Allows preset transformation of files and media for display.
+package = Styles
+core = 7.x
+files[] = file_styles.module
+files[] = file_styles.admin.inc
+dependencies[] = styles
+dependencies[] = image

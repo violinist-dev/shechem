@@ -1,0 +1,13 @@
+.not-front .col-c {
+  width: 670px;
+  margin-left: 220px;
+}
+
+.front .rotating-banner .fluid img {
+  height: 250px;
+  width: 800px;
+}
+
+.block-rotating-banner {
+  overflow: hidden;
+}

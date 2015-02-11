@@ -1,0 +1,7 @@
+; $Id: stylizer.info,v 1.3 2011/01/01 00:01:46 merlinofchaos Exp $
+name = Stylizer
+description = Create custom styles for applications such as Panels.
+core = 7.x
+package = Chaos tool suite
+dependencies[] = ctools
+dependencies[] = color

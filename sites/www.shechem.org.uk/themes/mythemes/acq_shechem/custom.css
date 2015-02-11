@@ -1,0 +1,123 @@
+::-moz-selection,
+::-webkit-selection,
+::selection {
+    text-shadow: none;
+    background: #572C15;
+    color: #fff;
+}
+
+.region-header .page-element {
+  margin-right: 0px;
+}
+
+.page-element {
+  margin-right: 0px;
+}
+
+#site-name {
+  text-align: center;
+}
+
+#header {
+  text-align: left;
+}
+
+#navigation-region li .active {
+  color: #572c15;
+}
+
+#sidebar-a #block-menu-menu-full-menu h2 {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 100%;
+  color: #572c15;
+}
+
+#header-region #site-name a {
+  text-transform: none;
+}
+
+#sidebar-a #block-menu-menu-full-menu li a {
+  text-decoration: none;
+}
+
+#sidebar-a .block h2 {
+  font-size: 22px;
+  line-height: 200%;
+}
+
+#sidebar-a h2 {
+  line-height: 200%;
+  font-size: 22px;
+}
+
+body {
+  background-image: url("images/bluebells-ed.jpg");
+  background-repeat: repeat-y;
+  background-attachment: fixed;
+}
+
+#prefooter-first-region li a:hover {
+  text-decoration: none;
+}
+
+#header-inner #site-name {
+  margin-top: 40px;
+}
+
+#header-inner #site-name a {
+  font-size: 62px;
+  font-family: 'Trebuchet MS','Lucida Sans Unicode','Lucida Grande','Lucida sans','sans-serif';
+}
+
+#banner-region #rotating-banner-2 .rb-slides {
+  border-color: #572c15;
+  border-top-width: 0px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+}
+
+#navigation {
+  background-color: #b88d44;
+  border-color: #572c15;
+}
+
+#footer {
+  background-color: #b88d44;
+  border-color: #572c15;
+  margin-top: 180px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+#prefooter {
+  padding-top: 0px;
+  line-height: 150%;
+}
+
+#content {
+  margin-bottom: 0px;
+}
+
+#prefooter-first-region ul {
+  font-size: 20px;
+}
+
+#prefooter-first-region .horizontal ul {
+  padding-left: 0px;
+  margin-top: 0px;
+}
+
+#page {
+  font-family: 'Trebuchet MS','Lucida Sans Unicode','Lucida Grande','Lucida sans','sans-serif';
+  font-size: 16px;
+  text-transform: none;
+  line-height: 150%;
+  letter-spacing: 0.2px;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding-bottom: 24px;
+}
+

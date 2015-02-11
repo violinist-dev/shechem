@@ -1,0 +1,7 @@
+; $Id: styles.info,v 1.1.2.2 2009/11/14 01:27:48 aaron Exp $
+
+name = Styles
+description = Bundles similar display formatters together.
+package = Styles
+core = 7.x
+files[] = styles.module

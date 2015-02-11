@@ -1,0 +1,4 @@
+; $Id: libraries.info,v 1.4.2.1 2011/01/27 02:31:41 sun Exp $
+name = Libraries
+description = Allows version dependent and shared usage of external libraries.
+core = 7.x

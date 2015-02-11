@@ -1,0 +1,9 @@
+; $Id: webform_alt_ui.info,v 1.1 2011/01/11 17:19:44 drothstein Exp $
+name = Webform Alternate UI
+description = Provides an alternate user experience for the Webform module.
+package = Webform
+core = 7.x
+dependencies[] = webform
+dependencies[] = form_builder
+dependencies[] = form_builder_webform
+dependencies[] = ux_elements

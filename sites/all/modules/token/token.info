@@ -1,0 +1,9 @@
+; $Id: token.info,v 1.12 2010/11/18 00:20:33 davereid Exp $
+name = Token
+description = Provides a user interface for the Token API and some missing core tokens.
+core = 7.x
+files[] = token.module
+files[] = token.install
+files[] = token.tokens.inc
+files[] = token.pages.inc
+files[] = token.test

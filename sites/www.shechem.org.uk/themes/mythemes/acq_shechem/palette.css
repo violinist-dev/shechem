@@ -1,0 +1,261 @@
+
+blockquote {
+  border-color: #f5f5f5;
+}
+
+a {
+  color: #cccccc;
+}
+
+.form-submit {
+  background-color: #f5f5f5;
+}
+
+body {
+  background-color: #cccccc;
+}
+
+.menu-dropdown .more-indicator {
+  background-color: transparent;
+}
+
+.stack-navigation {
+  background-color: #121212;
+  color: #d3fec1;
+}
+
+.stack-banner {
+  color: #121212;
+}
+
+.wrapper-content {
+  background-color: #ffffff;
+  border-color: #f5f5f5;
+}
+
+.sidebar .block {
+  border-color: #f5f5f5;
+}
+
+.wrapper-footer {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.wrapper-footer h2 {
+  color: #d3fec1;
+  border-color: #00a5ff;
+}
+
+.wrapper-footer a:hover {
+  color: #ffffff;
+}
+
+.stack-messages a {
+  color: #121212;
+}
+
+#forum thead tr th {
+  background-color: #f5f5f5;
+  border-color: #f5f5f5;
+}
+
+.forum td {
+  color: #121212;
+}
+
+#block-feedback-feedback a {
+  background-color: #62a734;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+#block-feedback-feedback a:hover {
+  background-color: #00a5ff;
+}
+
+.form-submit + input {
+  background-color: #ffffff;
+}
+
+.menu-dropdown .menu .menu li {
+  background-color: #121212;
+}
+
+h1 {
+  color: #62a734;
+}
+
+h2 {
+  color: #62a734;
+}
+
+h3 {
+  color: #62a734;
+}
+
+h4 {
+  color: #62a734;
+}
+
+h5 {
+  color: #121212;
+}
+
+h6 {
+  color: #121212;
+}
+
+a:hover {
+  color: #00a5ff;
+}
+
+h1 a {
+  color: #62a734;
+}
+
+h2 a {
+  color: #62a734;
+}
+
+h3 a {
+  color: #62a734;
+}
+
+h4 a {
+  color: #62a734;
+}
+
+h5 a {
+  color: #62a734;
+}
+
+h6 a {
+  color: #62a734;
+}
+
+.forum th {
+  color: #121212;
+}
+
+.forum th a {
+  color: #121212;
+}
+
+.forum td a {
+  color: #121212;
+}
+
+.page {
+  color: #121212;
+}
+
+.wrapper-footer h1 {
+  color: #d3fec1;
+}
+
+.wrapper-footer h3 {
+  color: #d3fec1;
+}
+
+.wrapper-footer h4 {
+  color: #d3fec1;
+}
+
+.wrapper-footer h5 {
+  color: #d3fec1;
+}
+
+.wrapper-footer a {
+  color: #ffffff;
+}
+
+.wrapper-header a:hover {
+  color: #d3fec1;
+}
+
+.wrapper-header {
+  color: #ffffff;
+}
+
+.wrapper-header a {
+  color: #ffffff;
+}
+
+.stack-navigation .menu li a:hover {
+  color: #d3fec1;
+}
+
+.stack-navigation .menu li a.active {
+  color: #d3fec1;
+}
+
+.stack-navigation .menu li a.active-trail {
+  color: #d3fec1;
+}
+
+.menu-dropdown .menu .expanded:hover > a {
+  color: #d3fec1;
+}
+
+.menu-dropdown .menu .active-trail:hover > a {
+  color: #d3fec1;
+}
+
+.menu-dropdown .menu .menu li:hover > a {
+  color: #d3fec1;
+}
+
+
+.wrapper-header #site-name a {
+  border-color: #ffffff;
+}
+
+#preheader-second-region a:hover {
+  color: #00a5ff;
+}
+
+#header-region #site-name a {
+  border-color: #ffffff;
+}
+
+.wrapper-header a {
+  color: #00a5ff;
+}
+
+#navigation-region li a {
+  color: #ffffff;
+}
+
+.forum table {
+  border-color: #cccccc;
+}
+
+#navigation-region li a:hover {
+  color: #121212;
+}
+
+.forum td {
+  border-color: #cccccc;
+}
+
+body {
+  background-color: #62a734;
+}
+
+#main li a {
+  color: #62a734;
+}
+
+#prefooter-first-region li a:hover {
+  color: #121212;
+}
+
+#header-inner #site-name a:hover {
+  color: #54c3ff;
+}
+
+a {
+  color: #62a734;
+}
+

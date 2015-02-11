@@ -1,0 +1,5 @@
+; $Id: form_builder.info,v 1.4 2011/01/05 02:25:48 quicksketch Exp $
+name = Form builder
+description = Form building framework.
+dependencies[] = options_element
+core = 7.x
