@@ -7,7 +7,25 @@
   width: auto;
 }
 .front #sidebar-b {
-  width: 48%;
+  min-width: 48%;
+}
+.sidebar {
+  max-width: 30%;
+}
+.logo-wrapper img {
+  max-width: 100%;
+}
+@media only screen and (max-width: 450px) {
+}
+@media only screen and (max-width: 600px) {
+  ul.menu {
+    padding-left: 0;
+  }
+  .block ul.menu ul.menu {
+    font-size: 0.75em;
+    line-height: 125%;
+    margin: 0.5em 0;
+  }
 }
 
 .simpleview-teasers #node-57 h2.article-header,
