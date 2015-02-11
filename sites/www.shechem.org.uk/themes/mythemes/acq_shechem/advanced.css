@@ -2,20 +2,12 @@
   width: 100%;
 }
 
+.page-width {
+  max-width: 960px;
+  width: auto;
+}
 .front #sidebar-b {
   width: 48%;
-}
-
-.front #copyright {
-  position: absolute;
-  width: 100%;
-  top: 1200px;
-}
-
-.front #header #navigation {
-  position: absolute;
-  width: 99%;
-  top: 1075px;
 }
 
 .simpleview-teasers #node-57 h2.article-header,
@@ -111,6 +103,7 @@ ul.menu li {
   -moz-box-shadow: 1px 2px 3px #323232;
   background-color: #FFF;
   border-color: whiteSmoke;
+  box-sizing: border-box;
 }
 
 #block-menu-menu-full-menu h2 {
