@@ -1,5 +1,4 @@
 <?php
-// $Id: search-result.tpl.php,v 1.9 2010/11/21 20:36:36 dries Exp $
 
 /**
  * @file
@@ -26,14 +25,12 @@
  *   the template.
  *
  * Default keys within $info_split:
- * - $info_split['type']: Node type (or item type string supplied by module).
+ * - $info_split['module']: The module that implemented the search query.
  * - $info_split['user']: Author of the node linked to users profile. Depends
  *   on permission.
  * - $info_split['date']: Last update of the node. Short formatted.
  * - $info_split['comment']: Number of comments output as "% comments", %
  *   being the count. Depends on comment.module.
- * - $info_split['upload']: Number of attachments output as "% attachments", %
- *   being the count. Depends on upload.module.
  *
  * Other variables:
  * - $classes_array: Array of HTML class attribute values. It is flattened
@@ -48,7 +45,7 @@
  * for its existence before printing. The default keys of 'type', 'user' and
  * 'date' always exist for node searches. Modules may provide other data.
  * @code
- *   <?php if (isset($info_split['comment'])) : ?>
+ *   <?php if (isset($info_split['comment'])): ?>
  *     <span class="info-comment">
  *       <?php print $info_split['comment']; ?>
  *     </span>
@@ -63,6 +60,8 @@
  * @see template_preprocess()
  * @see template_preprocess_search_result()
  * @see template_process()
+ *
+ * @ingroup themeable
  */
 ?>
 <li class="<?php print $classes; ?>"<?php print $attributes; ?>>
@@ -72,10 +71,10 @@
   </h3>
   <?php print render($title_suffix); ?>
   <div class="search-snippet-info">
-    <?php if ($snippet) : ?>
+    <?php if ($snippet): ?>
       <p class="search-snippet"<?php print $content_attributes; ?>><?php print $snippet; ?></p>
     <?php endif; ?>
-    <?php if ($info) : ?>
+    <?php if ($info): ?>
       <p class="search-info"><?php print $info; ?></p>
     <?php endif; ?>
   </div>

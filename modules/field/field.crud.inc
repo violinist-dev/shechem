@@ -1,5 +1,4 @@
 <?php
-// $Id: field.crud.inc,v 1.74 2011/01/02 17:26:39 webchick Exp $
 
 /**
  * @file
@@ -16,6 +15,9 @@
  *
  * The Field CRUD API uses
  * @link field Field API data structures @endlink.
+ *
+ * See @link field Field API @endlink for information about the other parts of
+ * the Field API.
  */
 
 /**
@@ -39,14 +41,15 @@
  *   - settings: each omitted setting is given the default value defined in
  *     hook_field_info().
  *   - storage:
- *     - type: the storage backend specified in the 'field_default_storage'
+ *     - type: the storage backend specified in the 'field_storage_default'
  *       system variable.
  *     - settings: each omitted setting is given the default value specified in
  *       hook_field_storage_info().
+ *
  * @return
  *   The $field array with the id property filled in.
- * @throw
- *   FieldException
+ *
+ * @throws FieldException
  *
  * See: @link field Field API data structures @endlink.
  */
@@ -57,11 +60,11 @@ function field_create_field($field) {
   }
   // Field type is required.
   if (empty($field['type'])) {
-    throw new FieldException('Attempt to create a field with no type.');
+    throw new FieldException(format_string('Attempt to create field @field_name with no type.', array('@field_name' => $field['field_name'])));
   }
   // Field name cannot contain invalid characters.
   if (!preg_match('/^[_a-z]+[_a-z0-9]*$/', $field['field_name'])) {
-    throw new FieldException('Attempt to create a field with invalid characters. Only lowercase alphanumeric characters and underscores are allowed, and only lowercase letters and underscore are allowed as the first character');
+    throw new FieldException(format_string('Attempt to create a field @field_name with invalid characters. Only lowercase alphanumeric characters and underscores are allowed, and only lowercase letters and underscore are allowed as the first character', array('@field_name' => $field['field_name'])));
   }
 
   // Field name cannot be longer than 32 characters. We use drupal_strlen()
@@ -241,9 +244,11 @@ function field_update_field($field) {
   // $prior_field may no longer be right.
   module_load_install($field['module']);
   $schema = (array) module_invoke($field['module'], 'field_schema', $field);
-  $schema += array('columns' => array(), 'indexes' => array());
+  $schema += array('columns' => array(), 'indexes' => array(), 'foreign keys' => array());
   // 'columns' are hardcoded in the field type.
   $field['columns'] = $schema['columns'];
+  // 'foreign keys' are hardcoded in the field type.
+  $field['foreign keys'] = $schema['foreign keys'];
   // 'indexes' can be both hardcoded in the field type, and specified in the
   // incoming $field definition.
   $field += array(
@@ -316,7 +321,11 @@ function field_read_field($field_name, $include_additional = array()) {
  * Reads in fields that match an array of conditions.
  *
  * @param array $params
- *   An array of conditions to match against.
+ *   An array of conditions to match against. Keys are columns from the
+ *   'field_config' table, values are conditions to match. Additionally,
+ *   conditions on the 'entity_type' and 'bundle' columns from the
+ *   'field_config_instance' table are supported (select fields having an
+ *   instance on a given bundle).
  * @param array $include_additional
  *   The default behavior of this function is to not return fields that
  *   are inactive or have been deleted. Setting
@@ -334,8 +343,21 @@ function field_read_fields($params = array(), $include_additional = array()) {
 
   // Turn the conditions into a query.
   foreach ($params as $key => $value) {
+    // Allow filtering on the 'entity_type' and 'bundle' columns of the
+    // field_config_instance table.
+    if ($key == 'entity_type' || $key == 'bundle') {
+      if (empty($fci_join)) {
+        $fci_join = $query->join('field_config_instance', 'fci', 'fc.id = fci.field_id');
+      }
+      $key = 'fci.' . $key;
+    }
+    else {
+      $key = 'fc.' . $key;
+    }
+
     $query->condition($key, $value);
   }
+
   if (!isset($include_additional['include_inactive']) || !$include_additional['include_inactive']) {
     $query
       ->condition('fc.active', 1)
@@ -422,7 +444,6 @@ function field_delete_field($field_name) {
  *   will be given the following default values:
  *   - label: the field name
  *   - description: empty string
- *   - weight: 0
  *   - required: FALSE
  *   - default_value_function: empty string
  *   - settings: each omitted setting is given the default value specified in
@@ -444,8 +465,8 @@ function field_delete_field($field_name) {
  *
  * @return
  *   The $instance array with the id property filled in.
- * @throw
- *   FieldException
+ *
+ * @throws FieldException
  *
  * See: @link field Field API data structures @endlink.
  */
@@ -503,18 +524,30 @@ function field_create_instance($instance) {
  * Updates an instance of a field.
  *
  * @param $instance
- *   An associative array representing an instance structure. The required
- *   keys and values are:
+ *   An associative array representing an instance structure. The following
+ *   required array elements specify which field instance is being updated:
  *   - entity_type: The type of the entity the field is attached to.
  *   - bundle: The bundle this field belongs to.
  *   - field_name: The name of an existing field.
- *   Read-only_id properties are assigned automatically. Any other
- *   properties specified in $instance overwrite the existing values for
- *   the instance.
+ *   The other array elements represent properties of the instance, and all
+ *   properties must be specified or their default values will be used (except
+ *   internal-use properties, which are assigned automatically). To avoid
+ *   losing the previously stored properties of the instance when making a
+ *   change, first load the instance with field_info_instance(), then override
+ *   the values you want to override, and finally save using this function.
+ *   Example:
+ *   @code
+ *   // Fetch an instance info array.
+ *   $instance_info = field_info_instance($entity_type, $field_name, $bundle_name);
+ *   // Change a single property in the instance definition.
+ *   $instance_info['required'] = TRUE;
+ *   // Write the changed definition back.
+ *   field_update_instance($instance_info);
+ *   @endcode
  *
- * @throw
- *   FieldException
+ * @throws FieldException
  *
+ * @see field_info_instance()
  * @see field_create_instance()
  */
 function field_update_instance($instance) {
@@ -635,12 +668,11 @@ function _field_write_instance($instance, $update = FALSE) {
 }
 
 /**
- * Reads a single instance record directly from the database.
+ * Reads a single instance record from the database.
  *
- * Generally, you should use the field_info_instance() instead.
- *
- * This function will not return deleted instances. Use
- * field_read_instances() instead for this purpose.
+ * Generally, you should use field_info_instance() instead, as it
+ * provides caching and allows other modules the opportunity to
+ * append additional formatters, widgets, and other information.
  *
  * @param $entity_type
  *   The type of entity to which the field is bound.
@@ -730,7 +762,7 @@ function field_read_instances($params = array(), $include_additional = array()) 
  *   An instance structure.
  * @param $field_cleanup
  *   If TRUE, the field will be deleted as well if its last instance is being
- *   deleted. If FALSE, it is the caller's responsability to handle the case of
+ *   deleted. If FALSE, it is the caller's responsibility to handle the case of
  *   fields left without instances. Defaults to TRUE.
  */
 function field_delete_instance($instance, $field_cleanup = TRUE) {
@@ -827,16 +859,20 @@ function field_delete_instance($instance, $field_cleanup = TRUE) {
  *     ),
  *   );
  * @endcode
+ *
+ * See @link field Field API @endlink for information about the other parts of
+ * the Field API.
  */
 
 /**
  * Purges a batch of deleted Field API data, instances, or fields.
  *
- * This function will purge deleted field data on up to a specified maximum
- * number of entities and then return. If a deleted field instance with no
- * remaining data records is found, the instance itself will be purged.
- * If a deleted field with no remaining field instances is found, the field
- * itself will be purged.
+ * This function will purge deleted field data in batches. The batch size
+ * is defined as an argument to the function, and once each batch is finished,
+ * it continues with the next batch until all have completed. If a deleted field
+ * instance with no remaining data records is found, the instance itself will
+ * be purged. If a deleted field with no remaining field instances is found, the
+ * field itself will be purged.
  *
  * @param $batch_size
  *   The maximum number of field data records to purge before returning.

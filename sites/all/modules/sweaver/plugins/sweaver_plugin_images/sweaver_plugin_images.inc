@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_images.inc,v 1.1.2.1.2.12 2010/11/08 14:08:03 swentel Exp $
 
 /**
  * @file
@@ -80,16 +79,16 @@ class sweaver_plugin_images extends sweaver_plugin {
         'file_validate_is_image' => array(),
       );
 
-      $sweaver_directory = file_default_scheme() . '://sweaver';
+      $sweaver_directory = 'public://sweaver';
       file_prepare_directory($sweaver_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-      $image = file_save_upload('image_image', $validators, file_default_scheme() . '://sweaver');
+      $image = file_save_upload('image_image', $validators, 'public://sweaver');
 
       if ($image && !empty($form_state['values']['image_description'])) {
         $image->description = $form_state['values']['image_description'];
         $image_parts = explode('.', $image->uri);
         $extension = array_pop($image_parts);
 
-        $new_image_name = file_default_scheme() . '://sweaver/sweaver_image_' . $image->fid . '.' . $extension;
+        $new_image_name = 'public://sweaver/sweaver_image_' . $image->fid . '.' . $extension;
         file_unmanaged_move($image->uri, $new_image_name);
 
         // Save permanent.
@@ -98,7 +97,7 @@ class sweaver_plugin_images extends sweaver_plugin {
         file_save($image);
 
         drupal_write_record('sweaver_image', $image);
-        sweaver_session(t('Image @image has been uploaded.', array('@image' => t($image->description))));
+        sweaver_session(t('Image @image has been uploaded.', array('@image' => $image->description)));
       }
       else {
 
@@ -135,8 +134,9 @@ class sweaver_plugin_images extends sweaver_plugin {
     $query = 'SELECT ti.fid, ti.description, f.uri FROM {sweaver_image} ti
               INNER JOIN {file_managed} f on f.fid = ti.fid order by description ASC';
     $images_result = db_query($query)->fetchAll();
+    global $base_root;
     foreach ($images_result as $image) {
-      $images[file_create_url($image->uri)] = $image->description;
+      $images[str_replace($base_root, '', file_create_url($image->uri))] = $image->description;
 
       // Styles presets.
       foreach ($styles as $preset_key => $preset) {
@@ -288,9 +288,9 @@ class sweaver_plugin_images extends sweaver_plugin {
       'file_validate_is_image' => array(),
     );
 
-    $sweaver_directory = file_default_scheme() . '://sweaver';
+    $sweaver_directory = 'public://sweaver';
     file_prepare_directory($sweaver_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-    $image = file_save_upload('image', $validators, file_default_scheme() . '://sweaver');
+    $image = file_save_upload('image', $validators, 'public://sweaver');
     if ($image) {
       $form_state['image'] = $image;
     }
@@ -310,7 +310,7 @@ class sweaver_plugin_images extends sweaver_plugin {
       $image->fid = $image_uploaded->fid;
       $image_parts = explode('.', $image_uploaded->uri);
       $extension = array_pop($image_parts);
-      $new_image_name = file_default_scheme() . '://sweaver/sweaver_image_' . $image_uploaded->fid . '.' . $extension;
+      $new_image_name = 'public://sweaver/sweaver_image_' . $image_uploaded->fid . '.' . $extension;
       file_unmanaged_move($image_uploaded->uri, $new_image_name);
 
       // Resave.

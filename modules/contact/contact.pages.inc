@@ -1,16 +1,16 @@
 <?php
-// $Id: contact.pages.inc,v 1.45 2010/11/30 17:16:37 dries Exp $
 
 /**
  * @file
- * User page callbacks for the contact module.
+ * Page callbacks for the Contact module.
  */
 
 /**
- * Form builder; the site-wide contact form.
+ * Form constructor for the site-wide contact form.
  *
  * @see contact_site_form_validate()
  * @see contact_site_form_submit()
+ * @ingroup forms
  */
 function contact_site_form($form, &$form_state) {
   global $user;
@@ -113,6 +113,8 @@ function contact_site_form($form, &$form_state) {
 
 /**
  * Form validation handler for contact_site_form().
+ *
+ * @see contact_site_form_submit()
  */
 function contact_site_form_validate($form, &$form_state) {
   if (!$form_state['values']['cid']) {
@@ -125,12 +127,14 @@ function contact_site_form_validate($form, &$form_state) {
 
 /**
  * Form submission handler for contact_site_form().
+ *
+ * @see contact_site_form_validate()
  */
 function contact_site_form_submit($form, &$form_state) {
   global $user, $language;
 
   $values = $form_state['values'];
-  $values['sender'] = $user;
+  $values['sender'] = clone $user;
   $values['sender']->name = $values['name'];
   $values['sender']->mail = $values['mail'];
   $values['category'] = contact_load($values['cid']);
@@ -167,10 +171,14 @@ function contact_site_form_submit($form, &$form_state) {
 }
 
 /**
- * Form builder; the personal contact form.
+ * Form constructor for the personal contact form.
  *
+ * Path: user/%user/contact
+ *
+ * @see contact_menu()
  * @see contact_personal_form_validate()
  * @see contact_personal_form_submit()
+ * @ingroup forms
  */
 function contact_personal_form($form, &$form_state, $recipient) {
   global $user;
@@ -245,7 +253,7 @@ function contact_personal_form($form, &$form_state, $recipient) {
 /**
  * Form validation handler for contact_personal_form().
  *
- * @see contact_personal_form()
+ * @see contact_personal_form_submit()
  */
 function contact_personal_form_validate($form, &$form_state) {
   if (!valid_email_address($form_state['values']['mail'])) {
@@ -256,13 +264,13 @@ function contact_personal_form_validate($form, &$form_state) {
 /**
  * Form submission handler for contact_personal_form().
  *
- * @see contact_personal_form()
+ * @see contact_personal_form_validate()
  */
 function contact_personal_form_submit($form, &$form_state) {
   global $user, $language;
 
   $values = $form_state['values'];
-  $values['sender'] = $user;
+  $values['sender'] = clone $user;
   $values['sender']->name = $values['name'];
   $values['sender']->mail = $values['mail'];
 

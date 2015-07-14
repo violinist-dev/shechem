@@ -1,4 +1,3 @@
-; $Id: system_test.info,v 1.3 2008/10/24 23:32:44 webchick Exp $
 name = System test
 description = Support module for system testing.
 package = Testing
@@ -6,3 +5,9 @@ version = VERSION
 core = 7.x
 files[] = system_test.module
 hidden = TRUE
+
+; Information added by Drupal.org packaging script on 2015-06-17
+version = "7.38"
+project = "drupal"
+datestamp = "1434567286"
+

@@ -1,5 +1,4 @@
 <?php
-// $Id: grey.theme.inc,v 1.1.4.4 2010/11/05 22:02:02 swentel Exp $
 
 /**
  * @file

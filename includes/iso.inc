@@ -1,5 +1,4 @@
 <?php
-// $Id: iso.inc,v 1.13 2011/01/04 16:07:48 webchick Exp $
 
 /**
  * @file
@@ -54,6 +53,7 @@ function _country_get_predefined_list() {
     'BM' => $t('Bermuda'),
     'BN' => $t('Brunei'),
     'BO' => $t('Bolivia'),
+    'BQ' => $t('Caribbean Netherlands'),
     'BR' => $t('Brazil'),
     'BS' => $t('Bahamas'),
     'BT' => $t('Bhutan'),
@@ -76,6 +76,7 @@ function _country_get_predefined_list() {
     'CR' => $t('Costa Rica'),
     'CU' => $t('Cuba'),
     'CV' => $t('Cape Verde'),
+    'CW' => $t('Curaçao'),
     'CX' => $t('Christmas Island'),
     'CY' => $t('Cyprus'),
     'CZ' => $t('Czech Republic'),
@@ -230,8 +231,10 @@ function _country_get_predefined_list() {
     'SN' => $t('Senegal'),
     'SO' => $t('Somalia'),
     'SR' => $t('Suriname'),
+    'SS' => $t('South Sudan'),
     'ST' => $t('Sao Tome and Principe'),
     'SV' => $t('El Salvador'),
+    'SX' => $t('Sint Maarten'),
     'SY' => $t('Syria'),
     'SZ' => $t('Swaziland'),
     'TC' => $t('Turks and Caicos Islands'),
@@ -461,7 +464,7 @@ function _locale_get_predefined_list() {
     'tt' => array('Tatar', 'Tatarça'),
     'tw' => array('Twi'),
     'ty' => array('Tahitian'),
-    'ug' => array('Uighur'),
+    'ug' => array('Uyghur'),
     'uk' => array('Ukrainian', 'Українська'),
     'ur' => array('Urdu', /* Left-to-right marker "‭" */ 'اردو', LANGUAGE_RTL),
     'uz' => array('Uzbek', "o'zbek"),

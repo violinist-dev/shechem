@@ -1,7 +1,13 @@
-; $Id: syslog.info,v 1.7 2010/12/20 19:59:43 webchick Exp $
 name = Syslog
 description = Logs and records system events to syslog.
 package = Core
 version = VERSION
 core = 7.x
 files[] = syslog.test
+configure = admin/config/development/logging
+
+; Information added by Drupal.org packaging script on 2015-06-17
+version = "7.38"
+project = "drupal"
+datestamp = "1434567286"
+

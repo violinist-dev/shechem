@@ -1,7 +1,12 @@
-;$Id: list_test.info,v 1.2 2010/12/20 19:59:41 webchick Exp $
 name = "List test"
 description = "Support module for the List module tests."
 core = 7.x
 package = Testing
 version = VERSION
 hidden = TRUE
+
+; Information added by Drupal.org packaging script on 2015-06-17
+version = "7.38"
+project = "drupal"
+datestamp = "1434567286"
+

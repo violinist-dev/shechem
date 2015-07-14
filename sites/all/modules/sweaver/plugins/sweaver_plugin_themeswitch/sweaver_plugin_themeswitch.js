@@ -1,4 +1,3 @@
-/* $Id: sweaver_plugin_themeswitch.js,v 1.1.4.4 2010/11/08 15:07:58 swentel Exp $ */
 
 /**
  * Add scroller on the theme switcher.

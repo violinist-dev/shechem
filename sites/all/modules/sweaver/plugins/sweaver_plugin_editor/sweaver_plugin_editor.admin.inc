@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_editor.admin.inc,v 1.1.2.6.2.15 2010/12/21 14:04:37 swentel Exp $
 
 /**
  * @file
@@ -31,6 +30,13 @@ function sweaver_settings($form, $form_state) {
     '#title' => t('Enable combined selectors'),
     '#default_value' => variable_get('sweaver_combined_selectors', FALSE),
     '#description' => t('Show combined tag and id or class selectors in the selectors dropdown.'),
+  );
+  
+  $form['sweaver_translate_path'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable translate oject\'s path translation'),
+    '#default_value' => variable_get('sweaver_translate_path', TRUE),
+    '#description' => t('Translate object path in a human-readable name'),
   );
 
   $skins = array();
@@ -130,19 +136,27 @@ function sweaver_plugin_editor_objects_list($form, $form_state, $object_type) {
     '#markup' => l(t('Add new @sweaver_object', array('@sweaver_object' => $object_type)), 'admin/config/user-interface/sweaver/editor/add/'. $object_type),
   );
 
-  $new_weight = 100;
+  $new_weight = 20;
   $objects = sweaver_object_load(NULL, $object_type, 'all');
+    
   if (!empty($objects)) {
-
     if ($object_type == 'selector') {
       $order = variable_get('sweaver_selector_order', array());
     }
-
     foreach ($objects as $key => $object) {
-
       $object_name = check_plain($object->name);
       $object_export_type = $object->export_type;
-      $weight = isset($order[$object_name]) ? $order[$object_name] : $new_weight++;
+      if (isset($order[$object_name])) {
+        $weight = $order[$object_name];
+      }
+      else {
+        if (isset($object->weight)) {
+          $weight = $object->weight;
+        }
+        else {
+          $weight = $new_weight++;
+        }
+      }
 
       $form[$object_name]['name'] = array(
         '#markup' => $object_name,
@@ -156,9 +170,11 @@ function sweaver_plugin_editor_objects_list($form, $form_state, $object_type) {
 
       // Operations.
       $operations = array();
-      $operations['edit'] = l(t('Edit'), 'admin/config/user-interface/sweaver/editor/edit/'. $object_type .'/'. $object_name);
+      if ($object_export_type != 4) {
+        $operations['edit'] = l(t('Edit'), 'admin/config/user-interface/sweaver/editor/edit/'. $object_type .'/'. $object_name);
+      }
 
-      if ($object_export_type != 2) {
+      if ($object_export_type != 2 && $object_export_type != 4) {
         $operations['export'] = l(t('Export'), 'admin/config/user-interface/sweaver/editor/export/'. $object_type .'/'. $object_name);
       }
 
@@ -557,6 +573,8 @@ function sweaver_property_form(&$form, $property = NULL) {
     'select' => t('Select'),
     'color' => t('Color'),
     'image' => t('Image'),
+    'radio' => t('Radio'),
+    'checkbox' => t('Checkbox'),
   );
   $form['property_type'] = array(
     '#title' => t('Type'),

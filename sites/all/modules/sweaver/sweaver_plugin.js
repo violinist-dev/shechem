@@ -1,4 +1,3 @@
-/* $Id: sweaver_plugin.js,v 1.1.4.5 2010/11/08 10:33:09 swentel Exp $ */
 
 (function ($) {
 
@@ -28,9 +27,6 @@ Drupal.Sweaver.writeCss = function(context) {
 
 $(document).ready(function() {
 
-  // Add sweaver class for extra margin at bottom.
-  $('body').addClass('sweaver');
-
   // Avoid overlap with the localization client.
   if ($('#l10n-client').length > 0) {
     $('#sweaver').css({'bottom': $('#l10n-client .labels').height()});
@@ -43,6 +39,11 @@ $(document).ready(function() {
   Drupal.Sweaver.open = Drupal.Sweaver.cookie('sweaver_open') ? Drupal.Sweaver.cookie('sweaver_open') : 'true';
   Drupal.Sweaver.cookie('sweaver_open', Drupal.Sweaver.open);
 
+  // Add sweaver class for extra margin at bottom.
+  if (Drupal.Sweaver.open != 'false') {
+    $('body').addClass('sweaver');
+  }
+  
   // Open/close the Sweaver bar.
   $('#sweaver-tabs .close a').click(function(){
     Drupal.Sweaver.toggleBar($(this).parent());
@@ -63,11 +64,11 @@ $(document).ready(function() {
   $('#sweaver .vertical-tabs a').click(function(){
     if (!$(this).hasClass('active')) {
       // handle active classes.
-      $('#sweaver .vertical-tabs .active').removeClass('active');
+      $('#sweaver #' + Drupal.Sweaver.container + ' .vertical-tabs .active').removeClass('active');
       $(this).addClass('active');
       var id = $(this).parent().attr('id').replace('tab-', '');
-      $('#sweaver .vertical-content #container-' + id).siblings().hide();
-      $('#sweaver .vertical-content #container-' + id).show();
+      $('#sweaver #' + Drupal.Sweaver.container + ' .vertical-content #container-' + id).siblings().hide();
+      $('#sweaver #' + Drupal.Sweaver.container + ' .vertical-content #container-' + id).show();
     }
     return false;
   });
@@ -81,13 +82,16 @@ Drupal.Sweaver.toggleBar = function (tab) {
   if (Drupal.Sweaver.open == 'false') {
     $('#sweaver-middle').css('height', 'auto');
     tab.removeClass('active-tab');
+    $('#sweaver-tabs .close').removeClass('active-tab');
     $('#' + Drupal.Sweaver.activeTab).addClass('active-tab');
     Drupal.Sweaver.open = 'true';
   }
   else {
     $('#sweaver-middle').css("height", 0);
+    $('#follow-link').hide();
     Drupal.Sweaver.activeTab =  $('#sweaver-tabs .active-tab').attr('id');
     tab.addClass('active-tab');
+    $('#sweaver-tabs .close').addClass('active-tab');
     Drupal.Sweaver.open = 'false';
   }
   // Hide the extra margin at the bottom of the screen.

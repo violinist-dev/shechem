@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_kb.inc,v 1.1.4.6 2010/11/09 13:50:26 swentel Exp $
 
 /**
  * @file

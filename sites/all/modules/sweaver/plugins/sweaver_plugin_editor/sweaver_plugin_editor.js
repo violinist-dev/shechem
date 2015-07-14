@@ -18,7 +18,6 @@ Drupal.Sweaver.activePath = ''; // Currently active path including pseudo-classe
 Drupal.Sweaver.safeActivePath = ''; // Currently active path excluding pseudo-classes.
 Drupal.Sweaver.activeElement = new Object(); // Currently active element.
 Drupal.Sweaver.updateMode = true; // should the form updates be saved in css?
-Drupal.Sweaver.changesboxcheck = false; // Changes box check.
 
 /**
  * Hook onload behavior
@@ -38,7 +37,8 @@ $(document).ready(function() {
   Drupal.Sweaver.updateForm();
 
   Drupal.Sweaver.bindClicks();
-
+  
+  Drupal.Sweaver.LoadPosition();
 });
 
 /**
@@ -52,6 +52,7 @@ Drupal.Sweaver.invokes.editor = {
 
     for (var key in Drupal.Sweaver.css) {
       var target = Drupal.Sweaver.css[key];
+      var contains_hidden_property = false;
       for (var prop in target) {
         if (Drupal.Sweaver.properties[prop]) {
 
@@ -59,21 +60,26 @@ Drupal.Sweaver.invokes.editor = {
           $.each(properties, function(i, property) {
             // Don't write anything if the value is empty.
             // 0 is not empty!
-            if (target[prop] == '' && target[prop] != '0') {
+            if (target[prop]['value'] == '' && target[prop]['value'] != '0') {
               cssContent += '';
             }
+            // Don't right anything if the property is hidden
+            else if (target[prop]['hidden']) {
+              cssContent += '';
+              contains_hidden_property = true;
+            }
             // Don't add a prefix and suffix for these exceptions.
-            else if ((property == 'background-color' && target[prop] == 'transparent') || (property == 'background-image' && target[prop] == 'none')) {
-              cssContent += '  ' + property + ': ' + target[prop] + ';\n';
+            else if ((property == 'background-color' && target[prop]['value'] == 'transparent') || (property == 'background-image' && target[prop]['value'] == 'none')) {
+              cssContent += '  ' + property + ': ' + target[prop]['value'] + ';\n';
             }
             else {
-              cssContent += '  ' + property + ': ' + Drupal.Sweaver.properties[prop].prefix + target[prop] + Drupal.Sweaver.properties[prop].suffix + ';\n';
+              cssContent += '  ' + property + ': ' + Drupal.Sweaver.properties[prop].prefix + target[prop]['value'] + Drupal.Sweaver.properties[prop].suffix + ';\n';
             }
           });
         }
       }
 
-      if (cssContent != '') {
+      if (cssContent != '' || contains_hidden_property) {
         css += key + '{\n';
         css += cssContent;
         css += '}\n';
@@ -106,6 +112,20 @@ Drupal.Sweaver.init = function() {
   db_css = $("[name=sweaver-css]");
   if (db_css.val() && db_css.val() != '[]'){
     Drupal.Sweaver.css = $.evalJSON(db_css.val());
+    
+    // Check if values are correctly set
+    // If not they are converted in aim to correct depreciated behaviour
+    for (key in Drupal.Sweaver.css){
+      var target = Drupal.Sweaver.css[key];
+      for (prop in target) {
+        if (jQuery.type(target[prop]) != 'object'){
+          Drupal.Sweaver.css[key][prop] = {
+            'value' : Drupal.Sweaver.css[key][prop],
+            'hidden' : false,
+          };
+        }  
+      }
+    }
     db_css.val('');
   }
 
@@ -153,8 +173,8 @@ Drupal.Sweaver.updateForm = function() {
 	          $.each(properties, function(i, property) {
 	            // Are there pseudo-classes in the active path? If so check the saved css for any values that have been set.
 	            // We have do this since jQuery cannot get any values for selectors with pseudo-classes.
-	            if (Drupal.Sweaver.safeActivePath != Drupal.Sweaver.activePath && Drupal.Sweaver.css[Drupal.Sweaver.activePath] && Drupal.Sweaver.css[Drupal.Sweaver.activePath][property]) {
-                value = Drupal.Sweaver.properties[property].prefix + Drupal.Sweaver.css[Drupal.Sweaver.activePath][property] + Drupal.Sweaver.properties[property].suffix;
+	            if (Drupal.Sweaver.safeActivePath != Drupal.Sweaver.activePath && Drupal.Sweaver.css[Drupal.Sweaver.activePath] && Drupal.Sweaver.css[Drupal.Sweaver.activePath][property]['value']) {
+                value = Drupal.Sweaver.properties[property].prefix + Drupal.Sweaver.css[Drupal.Sweaver.activePath][property]['value'] + Drupal.Sweaver.properties[property].suffix;
               }
               else {
                 value = $(Drupal.Sweaver.safeActivePath).css(property);
@@ -173,16 +193,63 @@ Drupal.Sweaver.updateForm = function() {
 	            $('#' + object + ' .colorSelector div').css('cssText', 'background-color: ' + value + ' !important;');
 	          }
 	          else if (value && !isEmpty(Drupal.Sweaver.properties[object]) && Drupal.Sweaver.properties[object].type == 'image') {
-	            // Remove the url() from around the image url.
+                // Remove the url() from around the image url.
 	            // Mozilla browsers wrap in url(""), while webkit browsers wrap in url()
 	            // so we need two replacements.
 	            stripped = value.replace('url("', '').replace('")', '').replace('url(', '').replace(')', '');
-	            $("#sweaver_plugin_editor #edit-" + object).val(stripped);
+                var container = $('#sweaver_plugin_editor #edit-' + object + '-ajax-wrapper .form-managed-file');
+                if (1){
+                if (stripped != 'none') {
+                  container.children('input[type="file"]').hide();
+                  container.children('span').remove();
+                  
+                  container.prepend('<span class="file"><a href="' + stripped + '" target="_blank">' + Drupal.t('Display image') + '</a></span>');
+
+                  container.children('#edit-' + object + '-upload-button').val(Drupal.t('Remove'));
+                  container.children('#edit-' + object + '-upload-button').attr('name', object + '_remove_button');
+                  container.children('#edit-' + object + '-upload-button').attr('id', 'edit-' + object + '-remove-button');
+                }
+                else{
+                  container.children('input[type="file"]').show();
+                  container.children('span').remove();
+                  container.children('input[name="' + object + '[fid]"]').val(0);
+
+                  if(container.children('input[type="file"]').length == 0){
+                    container.prepend('<input type="file" id="edit-' + object + '-upload" name="files[' + object + ']" size="22" class="form-file" style="display: inline-block; ">');
+                  }
+                  
+                  container.children('#edit-' + object + '-remove-button').val(Drupal.t('Upload'));
+                  container.children('#edit-' + object + '-remove-button').attr('name', object + '_upload_button');
+                  container.children('#edit-' + object + '-remove-button').attr('id', 'edit-' + object + '-upload-button');
+                }
+                }
+	            //$("#sweaver_plugin_editor #edit-" + object).val(stripped);
 	          }
-	          else {
+              else if (value && !isEmpty(Drupal.Sweaver.properties[object]) && Drupal.Sweaver.properties[object].type == 'checkbox') // Implement the new field checkbox
+              {
+                if (Drupal.Sweaver.properties[object]['options'][value] == true)
+                    $("#sweaver_plugin_editor #button-checkbox-" + object).addClass('button_active');
+                else $("#sweaver_plugin_editor #button-checkbox-" + object).removeClass('button_active')
+              }
+              else if (value && !isEmpty(Drupal.Sweaver.properties[object]) && Drupal.Sweaver.properties[object].type == 'radio') // Implement the new field radio
+	          {
+                $("#sweaver_plugin_editor div[id^=button-radio-" + object + "-]").removeClass('button_active');
+                $("#sweaver_plugin_editor #button-radio-" + object + '-' + value).addClass('button_active');
+	          }
+              else {
 	            if (value) {
-                // Make the sure it is a the string.
-                value = value + '';
+                  if (value.substr(-1) == '%') {
+                    // This value is in %
+                    // We have to check if this is a correct for this field
+                    // If not we will convert this value into px
+                    if (!(value in Drupal.Sweaver.properties[object].options)) {
+                      //Get first parent width
+                      value = $(tempObject).parent().outerWidth() * value.replace('%', '') / 100;
+                      value = Math.round(value);
+                    }
+                  }
+                  // Make the sure it is a the string.
+                  value = value + '';
 	              $("#sweaver_plugin_editor #edit-" + object).val(value.replace('px', ''));
 	            }
 	          }
@@ -312,6 +379,12 @@ Drupal.Sweaver.addSliders = function() {
       }
     });
   });
+  
+  //Double clicking on a slider delete all modifications made through the editor to the property
+  $('#sweaver .slider a').bind('dblclick', function(){
+    property = $(this).parent().attr('id').replace('-slider', '');
+    Drupal.Sweaver.deleteProperty(Drupal.Sweaver.activePath, property);
+  });
 }
 
 /**
@@ -325,14 +398,8 @@ Drupal.Sweaver.bindClicks = function() {
   // Add hover outline object.
   $('#sweaver-frontend').append('<div style="position: absolute; top: 0; left: 0; border: 2px dotted #ccc" id="#sweaver-hover"></div>');
 
-  // Never select the editor form as themeable.
-  // This function appears to be needed, although we exclude on the click bind too.
-  $(excludes).click(function(event) {
-    event.stopPropagation();
-  });
-
   // Build an object with all the elements that can be hovered/clicked
-  var tempSelectors = $('html').find('*').filter(':parents(' + excludes + '):not(' + excludes + ')');
+  var tempSelectors = $('body').find('*').filter(':parents(' + excludes + '):not(' + excludes + ')');
 
   // When an element is hovered, add a class 'sweaver-hovered'.
   if (Drupal.settings.sweaver['preview_selector']) {
@@ -340,7 +407,7 @@ Drupal.Sweaver.bindClicks = function() {
     .bind('mouseenter', function(event){
       // Only do something when the content area is visible.
       if (Drupal.Sweaver.visible()) {
-        tempObject = $(event.target);
+        tempObject = $(this);
         object = Drupal.Sweaver.buildSweaverObject(tempObject);
         // Loop through the selectors to see if the current item should be selectable.
         if (!object.translation[0]) {
@@ -357,9 +424,15 @@ Drupal.Sweaver.bindClicks = function() {
 
         // Don't add the class on elements that cover the entire screen
         // since that would add a, annoying horizontal scrollbar.
+        
+        // There is actually a bug reguarding WebKit and outerHeight/outerWidth property
+        // In aim to make it work we have to shortly change the display to inline-block
+        var originalDisplay = tempObject.css('display');
+        tempObject.css('display', 'inline-block');
         if (tempObject.outerWidth() != $(window).width()) {
           tempObject.addClass('sweaver-hovered');
         }
+        tempObject.css('display', originalDisplay);
       }
     })
     .bind('mouseleave', function(event){
@@ -375,9 +448,12 @@ Drupal.Sweaver.bindClicks = function() {
             return false;
           }
         });
+        var originalDisplay = tempObject.css('display');
+        tempObject.css('display', 'inline-block');
         if (tempObject.outerWidth() != $(window).width()) {
           tempObject.addClass('sweaver-hovered');
         }
+        tempObject.css('display', originalDisplay);
       }
     });
   }
@@ -385,72 +461,15 @@ Drupal.Sweaver.bindClicks = function() {
   // When an element is clicked, add a class and build the entire path.
   tempSelectors
   .bind('click', function (event) {
-    event.stopPropagation();
     // Only do something when the content area is visible.
     if (Drupal.Sweaver.visible()) {
 
+      // We need to use event.target here as we need to know if we clicked on an element that should be excluded.
+      // If we don't do this, then we will get the parent element of the excluded element, which is not what we want.
       tempObject = $(event.target);
-      object = Drupal.Sweaver.buildSweaverObject(tempObject);
-
-       // If the clicked object is a link, or an element in a link, prevent default behavior.
-       $('#follow-link').hide();
-       if(object.tag == 'a' || tempObject.parents('a').length > 0) {
-         var position = tempObject.offset();
-         var clickObject = tempObject;
-         if (object.tag != 'a') {
-           clickObject = tempObject.parents('a');
-         }
-         if (object.id != 'follow-link') {
-           $('#follow-link').attr('href', clickObject.attr('href')).css({'top' : position.top + clickObject.outerHeight() + 5, 'left': position.left}).fadeIn();
-           event.preventDefault();
-         }
-       }
-       // If the clicked object is a button prevent default behavior.
-       if(object.tag == 'input' || object.tag == 'label') {
-         event.preventDefault();
-       }
-
-      // Don't do anything if the clicked object is the 'follow-link' link.
-      if (object.id != 'follow-link') {
-
-	      // Only do something if the clicked item is found in the selectors.
-	      if (!object.translation[0]) {
-	        $.each(tempObject.parents(), function() {
-	          tempObject = $(this);
-	          object = Drupal.Sweaver.buildSweaverObject(tempObject);
-	          if (object.translation[0]) {
-	            return false;
-	          }
-	        });
-	      }
-
-	      // clear the old paths.
-	      $('#sweaver_plugin_editor .sweaver-header').html('<div id="full-path" class="clearfix"></div><div id="selected-path" class="clear-block"></div>');
-
-        // Initial check for the changesbox.
-        if (Drupal.Sweaver.changesboxcheck == false) {
-          Drupal.Sweaver.ChangesBox(true);
-          Drupal.Sweaver.changesboxcheck = true;
-        }
-
-        // Reset some values.
-        Drupal.Sweaver.path.length = 0;
-        Drupal.Sweaver.pathIndexes.length = 0;
-        $("#selected-path").html('<span class="path-label">' + Drupal.t('Selected item: ') + '</span><span class="path-content"></span>');
-        $("#full-path").html('<span class="path-label">' + Drupal.t('Full path: ') + '</span><span class="path-content"></span>');
-
-        // Build path with parents.
-        Drupal.Sweaver.buildPath(tempObject);
-        Drupal.Sweaver.updateForm();
-        Drupal.Sweaver.updateScreen();
-      }
+      
+      Drupal.Sweaver.editSelection(tempObject, event);
     }
-  });
-
-  // Toggle changes area.
-  $('#changes-toggler').click(function(event){
-    event.stopPropagation();
-    Drupal.Sweaver.ChangesBox(false);
   });
 
   // Hide sliders and close groups when clicking outside of them.
@@ -458,13 +477,86 @@ Drupal.Sweaver.bindClicks = function() {
     Drupal.Sweaver.hideOverlays();
   });
 
-  // Update css when something is changed in the form.
-  $("#sweaver_plugin_editor input[id^=edit-], #sweaver_plugin_editor select[id^=edit-]").change(function(){
+  // Update css when a fake checkbox is clicked
+  $("#sweaver_plugin_editor div[id^=button-checkbox-]").click(function(){
+    if ($(this).hasClass('button_active'))
+      $(this).removeClass('button_active');
+    else $(this).addClass('button_active');
+    
     if (Drupal.Sweaver.updateMode) {
-      Drupal.Sweaver.setValue($(this).attr('name'), $(this).val());
+      var status = $(this).hasClass('button_active');
+      var property_to_update = $(this).attr('id').replace('button-checkbox-', '');
+        
+      $.each(Drupal.Sweaver.properties[property_to_update]['options'], function(key, value) { 
+        if (value == status)
+          Drupal.Sweaver.setValue(property_to_update, key);
+      });
     }
   });
+  
+  // Update css when a fake radio button is clicked
+  $("#sweaver_plugin_editor div[id^=button-radio-]").click(function(){
+    var property_to_update = $(this).attr('name');
+    var value = $(this).attr('id').replace('button-radio-' + property_to_update + '-', '');
+    $("#sweaver_plugin_editor div[id^=button-radio-" + property_to_update + "-]").removeClass('button_active');
+    $(this).addClass('button_active');
+    
+    if (Drupal.Sweaver.updateMode) {
+        Drupal.Sweaver.setValue(property_to_update, value);
+    }
+  });
+  
+  //Double clicking on a radio button delete all modifications made through the editor to the property
+  $("#sweaver_plugin_editor div[id^=button-radio-]").bind('dblclick', function(){
+    property = $(this).attr('name');
+    Drupal.Sweaver.deleteProperty(Drupal.Sweaver.activePath, property);
+  });
 
+  // Update css when something (that is not checkbox or radio button) is changed in the form.
+  $("#sweaver_plugin_editor input[id^=edit-], #sweaver_plugin_editor select[id^=edit-]").live('change', function(){
+    if (Drupal.Sweaver.updateMode) {
+      // Is this a file input ?
+      if ($(this).attr('name').match('^files\[[a-zA-Z0-9_-]+\]')){
+        var name = $(this).attr('name').substr(6, $(this).attr('name').length - 7);
+        var button = $('#' + $(this).attr('id') + '-button');
+        button.trigger('click');
+        button.trigger('mousedown');    
+          
+        // this function check every second if the image selected has been uploaded
+        (function imageValueChecker (i) {  
+          var fidInput = $('#sweaver_plugin_editor input[name="' + name + '[fid]"]');
+          setTimeout(function () {  
+          if (fidInput.val() != 0 ){
+          // Download complete
+          // We proceed of the css update
+            $('#edit-' + name + '-ajax-wrapper').ajaxSuccess(function(evt, request, settings){
+              window.location.reload();
+            });
+            absolute_path = fidInput.siblings('.file').children('a').attr('href');
+            relative_path = absolute_path.replace(Drupal.settings.sweaver['base_root'], '');
+            Drupal.Sweaver.setValue(name ,relative_path);
+            Drupal.Sweaver.SavePosition();
+            Drupal.Sweaver.AutoSave();
+          }               
+          if (fidInput.val() == 0 && --i) imageValueChecker(i);      //  decrement i and call myLoop again if i > 0
+          }, 1000);
+        })(15); // If 15 seconds after the beginning of the upload it is not yet finished we can assume that there has been a problem.
+      }
+      else {
+        Drupal.Sweaver.setValue($(this).attr('name'), $(this).val());
+      }
+    }
+  });
+  
+  $('#sweaver_plugin_editor .form-managed-file input[type=submit]').live('mouseover', function(){
+    if(!$(this).hasClass('event_added')){
+      $(this).addClass('event_added');
+      $(this).bind('mousedown', function(){
+        Drupal.Sweaver.setValue($(this).attr('name').replace('_remove_button', ''), 'none');
+      });
+    }
+  });
+  
   // Show the slider when a numeric value is entered.
   $("#sweaver_plugin_editor  .slider-value").click(function(event){
     event.stopPropagation();
@@ -486,16 +578,118 @@ Drupal.Sweaver.bindClicks = function() {
       $('#sweaver_plugin_editor .form-item, #sweaver_plugin_editor .sweaver-group').removeClass('active');
       $slider.parent().addClass('active');
       $slider.parents('.sweaver-group').addClass('active');
-
+      
+      var container = $(this).parent().parent();      
+      var top =  $slider.outerHeight();
       var left = -($slider.width() / 2) + ($(this).outerWidth() / 2);
+      
       if ($slider.siblings('label').is(':visible')) {
         left += $slider.siblings('label').width();
       }
-      var top = $slider.outerHeight();
+      else if (container.hasClass('side')) {
+        left += $(this).offset().left - container.offset().left;      
+      }
+      
+      // Flip the slider over the input when it is too close to the bottom of the page to be displayed
+      if ($('#sweaver').offset().top + $('#sweaver').height() - $(this).offset().top < 100) {
+        top = 0 - top - 5;
+      }  
+      
       $slider.css({'left' : left, 'top' : top}).css({'visibility' : 'visible'});
     }
   });
+  
+  // The value of an input field can be modified with arrows
+  $("#sweaver_plugin_editor  .slider-value").keydown(function(event){
+    var value = $(this).val();
+    switch(event.keyCode) {
+      case 37:
+      case 40:
+        value--;
+        $(this).val(value);
+        Drupal.Sweaver.setValue($(this).attr('name'), value);
+        break;
+      
+      case 38:
+      case 39:
+        value++;
+        $(this).val(value);
+        Drupal.Sweaver.setValue($(this).attr('name'), value);
+        break;
+    }
+  });
 
+}
+
+/**
+ * Load an object to the editor from a selector
+ */
+Drupal.Sweaver.editSelection = function (tempObject, event) {
+  clicked_object = (event == null) ? false : true;
+  if (!tempObject.parents(Drupal.settings.sweaver['exclude_selectors']).length > 0) {
+    if (clicked_object) {
+      event.stopPropagation();
+    }
+
+    object = Drupal.Sweaver.buildSweaverObject(tempObject);
+    
+    // If the clicked object is a link, or an element in a link, prevent default behavior.
+    $('#follow-link').hide();
+    if (object.tag == 'a' || tempObject.parents('a').length > 0) {
+      var position = tempObject.offset();
+      var clickObject = tempObject;
+      if (object.tag != 'a') {
+        clickObject = tempObject.parents('a');
+      }
+      if (object.id != 'follow-link') {
+        $('#follow-link').attr('href', clickObject.attr('href')).css({
+          'top': position.top + clickObject.outerHeight() + 5,
+          'left': position.left
+        }).fadeIn();
+        if (clicked_object) {
+          event.preventDefault();
+        }
+      }
+    }
+    // If the clicked object is a button prevent default behavior.
+    if ((object.tag == 'input' || object.tag == 'label') && clicked_object) {
+      event.preventDefault();
+    }
+
+    // Don't do anything if the clicked object is the 'follow-link' link.
+    if (object.id != 'follow-link') {
+
+      // Only do something if the clicked item is found in the selectors.
+      if (!object.translation[0]) {
+        $.each(tempObject.parents(), function () {
+          tempObject = $(this);
+          object = Drupal.Sweaver.buildSweaverObject(tempObject);
+          if (object.translation[0]) {
+            return false;
+          }
+        });
+      }
+      
+      // Prevent from selecting non modifiable selectors
+      if (!object.translation[0]) {
+        return false;
+      }
+
+      // clear the old paths.
+      $('#sweaver_plugin_editor .sweaver-header').html('<div id="full-path" class="clearfix"></div><div id="selected-path" class="clear-block"></div>');
+
+      // Reset some values.
+      Drupal.Sweaver.path.length = 0;
+      Drupal.Sweaver.pathIndexes.length = 0;
+      $("#selected-path").html('<span class="path-label">' + Drupal.t('Selected item: ') + '</span><span class="path-content"></span>');
+      $("#full-path").html('<span class="path-label">' + Drupal.t('Full path: ') + '</span><span class="path-content"></span>');
+
+      // Build path with parents.
+      Drupal.Sweaver.buildPath(tempObject);
+      Drupal.Sweaver.updateForm();
+      Drupal.Sweaver.updateScreen();
+    }
+  }
 }
 
 /**
@@ -550,15 +744,15 @@ Drupal.Sweaver.buildPath = function(object) {
         }
         if (selector.selector == '#' + parent.id || selector.selector == parent.tag) {
           match = selector.selector;
-           if (selector.highlight == '1') {
+          if (selector.highlight == '1') {
             active = true;
             Drupal.Sweaver.addToActivePathIndex(i);
           }
         } else {
           $.each(parent.classes, function(index, aClass) {
             if (selector.selector == '.' + aClass) {
-               match = selector.selector;
-               if (selector.highlight == '1') {
+              match = selector.selector;
+              if (selector.highlight == '1') {
                 active = true;
                 Drupal.Sweaver.addToActivePathIndex(i);
                 return false;
@@ -578,6 +772,13 @@ Drupal.Sweaver.buildPath = function(object) {
       i++;
     }
   });
+  if (i > 2) // There are always at least 2 levels
+  {
+    if (!(1 in Drupal.Sweaver.pathIndexes)) {
+      Drupal.Sweaver.addToActivePathIndex(1);
+      $('#sweaver #full-path #sid-1').addClass('active');
+    }
+  }
   Drupal.Sweaver.printActivePath();
 }
 
@@ -829,34 +1030,11 @@ Drupal.Sweaver.updateStyleTab = function(theClass, name) {
  */
 Drupal.Sweaver.setValue = function(property, value) {
   Drupal.Sweaver.css[Drupal.Sweaver.activePath] = Drupal.Sweaver.css[Drupal.Sweaver.activePath] || {};
-  Drupal.Sweaver.css[Drupal.Sweaver.activePath][property] = value;
+  Drupal.Sweaver.css[Drupal.Sweaver.activePath][property] = {
+    'value' : value,
+    'hidden' : false,
+  };
   Drupal.Sweaver.writeCss();
-
-  // Check for state of changes box.
-  if (Drupal.Sweaver.cookie('sweaver_changes_box') == 'true') {
-    Drupal.Sweaver.writeChanges();
-  }
-}
-
-/**
- * Write changes to the changes popup so that people can remove them again.
- */
-Drupal.Sweaver.writeChanges = function() {
-  $('#editor-changes').html('');
-  for (key in Drupal.Sweaver.css) {
-    var target = Drupal.Sweaver.css[key];
-    for (prop in target) {
-      if (Drupal.Sweaver.properties[prop] && (target[prop] != '' || target[prop] == '0')) {
-      // Special case for transparent.
-        if ((prop == 'background-color' && target[prop] == 'transparent') || (prop == 'background-image' && target[prop] == 'none')) {
-          $('#editor-changes').prepend($('<p onclick="Drupal.Sweaver.deleteProperty(\'' + key + '\', \'' + prop + '\')">' + key + ': '+ prop + ': ' + target[prop] + '</p>'));
-        }
-        else {
-          $('#editor-changes').prepend($('<p onclick="Drupal.Sweaver.deleteProperty(\'' + key + '\', \'' + prop + '\')">' + key + ': '+ prop + ': ' + Drupal.Sweaver.properties[prop].prefix + target[prop] + Drupal.Sweaver.properties[prop].suffix + '</p>'));
-        }
-      }
-    }
-  }
 }
 
 /**
@@ -871,7 +1049,6 @@ Drupal.Sweaver.deleteProperty = function(key, property) {
     }
   }
   Drupal.Sweaver.writeCss();
-  Drupal.Sweaver.writeChanges();
   Drupal.Sweaver.updateForm();
 }
 
@@ -995,7 +1172,7 @@ Drupal.Sweaver.objectToReadable = function(object) {
   translation.splice(0, 0, translation[index]);
   css.splice(0, 0, css[index]);
 
-  object.translation = translation;
+  object.translation = Drupal.settings.sweaver['translate_path'] ? translation : css;
   object.css = css;
   return translation;
 }
@@ -1004,9 +1181,125 @@ Drupal.Sweaver.objectToReadable = function(object) {
  * Add a pseudo class to the translation.
  */
 Drupal.Sweaver.addPseudoClass = function(pseudoClass, original) {
-  var translation = pseudoClass ? original + Drupal.t(' in the ' + pseudoClass + ' state') : original;
+  if (Drupal.settings.sweaver['translate_path']) {
+    var translation = pseudoClass ? original + Drupal.t(' in the ' + pseudoClass + ' state') : original;
+  }
+  else {
+    var translation = pseudoClass ? original + pseudoClass : original;
+  }
   return translation;
 }
+
+/**
+ * Save current position
+ */
+Drupal.Sweaver.SavePosition = function() {
+  // Store the object used
+  // First we need to construct this path
+  path = '';
+  Drupal.Sweaver.path.reverse();
+  $.each(Drupal.Sweaver.path, function(index, value){
+    $.each(value.classes, function(i, v){
+      if (v == 'sweaver-hovered' || v == 'sweaver-clicked') {
+        value.classes.splice(i);
+      }
+    })
+    
+    if (value.tag == 'html' || value.tag == 'body') {
+      path += ' ' + value.tag;
+    }
+    else if (value.id != '') {
+      path += ' #' + value.id;
+    }
+    else if (Object.keys( value.classes ).length !== 0 && value.classes[0] != ''){
+      path += ' .' + value.classes[0];
+    }
+    else {
+      path += ' ' + value.tag;
+    }
+  });
+  Drupal.Sweaver.path.reverse();
+  Drupal.Sweaver.cookie('sweaver_active_path', path);
+  
+  // Save indexed path
+  indexed_path = '';
+  $('#sweaver_plugin_editor #full-path div[id^=sid-].active').each(function(){
+    id = $(this).attr('id').substr(4);
+    $(this).find('li.active').each(function(){
+      if ($(this).children().attr('id') != '') {
+        sub_id = $(this).children().attr('id').substr(5);
+      }
+      else {
+        sub_id = $(this).children().attr('class');
+      }
+      indexed_path += ' ' + id + '-' + sub_id;
+    });
+  });
+  Drupal.Sweaver.cookie('sweaver_indexed_path', indexed_path);
+  
+  // Store the tab used
+  Drupal.Sweaver.cookie('sweaver_active_vertical_tab', $('#sweaver_plugin_editor #sweaver-editor .vertical-tabs a.active').parent().attr('id'));
+}
+
+/**
+ * Load a saved position in the editor (active path and tab)
+ */
+Drupal.Sweaver.LoadPosition = function() {
+  active_path = Drupal.Sweaver.cookie('sweaver_active_path');
+  indexed_path = Drupal.Sweaver.cookie('sweaver_indexed_path');
+  vertical_tab = Drupal.Sweaver.cookie('sweaver_active_vertical_tab');
+  
+  // If a configuration has been saved lets load it
+  if (active_path && indexed_path && vertical_tab){    
+    tempObject = $(active_path);
+    
+    // Load active path in the editor
+    Drupal.Sweaver.editSelection(tempObject);
+    
+    // Reset full path
+    $('#sweaver_plugin_editor #full-path div[id^=sid-]').removeClass('active');
+    Drupal.Sweaver.pathIndexes = [];
+    
+    // Apply indexed path
+    $.each(indexed_path.split(' '), function(index, value){
+      specific_path = value.split('-');
+      if (specific_path.length == 2) {
+        $('#sweaver_plugin_editor #full-path #sid-' + specific_path[0]).addClass('active');
+        Drupal.Sweaver.addToActivePathIndex(specific_path[0]);
+        Drupal.Sweaver.pathIndexes.sort(function(a,b){return a - b});
+        
+        if (specific_path[1].match('^[0-9]+$')) {
+        // Alternative Class  
+          Drupal.Sweaver.path[specific_path[0]].preferredSelector = specific_path[1];
+          
+          $('#sid-' + specific_path[0] + ' .first-selector a').html(Drupal.Sweaver.objectToReadable(Drupal.Sweaver.path[specific_path[0]])[0]);
+          
+          $('#sweaver_plugin_editor #full-path #sid-' + specific_path[0] + ' .selectors li').removeClass('active');
+          $('#sweaver_plugin_editor #full-path #sid-' + specific_path[0] + ' #ssid-' + specific_path[1]).parent().addClass('active');
+        }
+        else {
+        // Pseudo Class
+          Drupal.Sweaver.path[specific_path[0]].pseudoClass = ':' + specific_path[1];
+          Drupal.Sweaver.path[specific_path[0]].translation = Drupal.Sweaver.objectToReadable(Drupal.Sweaver.path[specific_path[0]]);
+          $('#sid-' + specific_path[0] + ' .first-selector a').html(Drupal.Sweaver.path[specific_path[0]].translation[0]);
+          
+          $('#sweaver_plugin_editor #full-path #sid-' + specific_path[0] + ' .pseudoclasses .' + specific_path[1]).parent().addClass('active');
+        }
+      }
+    });
+    Drupal.Sweaver.printActivePath();
+    Drupal.Sweaver.activeElement = Drupal.Sweaver.path[Drupal.Sweaver.pathIndexes[0]] ? Drupal.Sweaver.path[Drupal.Sweaver.pathIndexes[0]] : {} ;
+    Drupal.Sweaver.updateForm();
+    Drupal.Sweaver.updateScreen();
+    
+    $('#sweaver_plugin_editor #sweaver-editor #' + vertical_tab + ' a').click();
+    
+    Drupal.Sweaver.cookie('sweaver_active_path', null);
+    Drupal.Sweaver.cookie('sweaver_indexed_path', null);
+    Drupal.Sweaver.cookie('sweaver_active_vertical_tab', null);
+  }
+}
+
 
 /**
  * Build a Sweaver object.
@@ -1047,34 +1340,6 @@ Drupal.Sweaver.hideOverlays = function() {
 
   // Remove all active classes from form-items and groups
   $('#sweaver_plugin_editor .form-item, #sweaver_plugin_editor .sweaver-group').removeClass('active');
-}
-
-/**
- * Open or close the changes box().
- */
-Drupal.Sweaver.ChangesBox = function(cookie_check) {
-
-  var show_box = false;
-  box = $('#editor-changes');
-  toggler = $('#changes-toggler');
-
-  if (cookie_check == true && Drupal.Sweaver.cookie('sweaver_changes_box') == 'true') {
-    show_box = true;
-  }
-  else if (parseInt(box.css('right')) < 0 && cookie_check == false) {
-    show_box = true;
-  }
-
-  if (show_box == true) {
-    Drupal.Sweaver.writeChanges();
-    box.css({'right' : '10px'});
-    toggler.addClass('open').html(Drupal.t('Hide changes'));
-    Drupal.Sweaver.cookie('sweaver_changes_box', true);
-  } else {
-    box.css({'right' : '-10000px'});
-    toggler.removeClass('open').html(Drupal.t('Show changes'));
-    Drupal.Sweaver.cookie('sweaver_changes_box', false);
-  }
 }
 
 /**

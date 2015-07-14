@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin.inc,v 1.1.4.3 2010/11/08 15:07:57 swentel Exp $
 
 /**
  * @file
@@ -69,7 +68,7 @@ abstract class sweaver_plugin {
   /**
    * Sweaver objects alter.
    */
-  public function sweaver_objects_alter(&$objects) {
+  public function sweaver_objects_alter(&$objects) { 
     // Alter the objects if you want to.
   }
 
@@ -136,6 +135,18 @@ abstract class sweaver_plugin {
    */
   public function sweaver_form_submit($form, &$form_state) {
     // Submit handler for the managing form.
+  }
+
+  /**
+   * Return false to not show editor.
+   */
+  public function show_editor() {
+  }
+
+  /**
+   * Return true to allow access and false to deny.
+   */
+  public function sweaver_menu_access_callback($args) {
   }
 
   /**

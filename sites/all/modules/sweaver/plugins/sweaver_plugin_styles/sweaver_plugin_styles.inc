@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_styles.inc,v 1.1.2.8.2.21 2010/12/21 14:04:37 swentel Exp $
 
 /**
  * @file
@@ -247,8 +246,8 @@ class sweaver_plugin_styles extends sweaver_plugin {
    * Frontend css and js.
    */
   public function sweaver_form_css_js(&$inline_settings) {
-    if (variable_get('sweaver_styles_autosave', 10) > 0) {
-      $inline_settings['sweaver']['autosave'] = variable_get('sweaver_styles_autosave', 10);
+    if (variable_get('sweaver_styles_autosave', 0) > 0) {
+      $inline_settings['sweaver']['autosave'] = variable_get('sweaver_styles_autosave', 0);
     }
     drupal_add_js(drupal_get_path('module', 'sweaver') .'/plugins/sweaver_plugin_styles/sweaver_plugin_styles.js');
   }
@@ -257,7 +256,8 @@ class sweaver_plugin_styles extends sweaver_plugin {
    * Frontend form submit.
    */
   public function sweaver_form_submit($form, &$form_state) {
-    $sweaver_directory = file_default_scheme() . '://sweaver';
+      
+    $sweaver_directory = 'public://sweaver';
     file_prepare_directory($sweaver_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
 
     $styles_form = $form['sweaver_plugin_styles']['form'];
@@ -300,24 +300,51 @@ class sweaver_plugin_styles extends sweaver_plugin {
       else {
         $style->style = $style_name;
         if (empty($style->style)) {
-          sweaver_session(t('You need to enter a name for your style.'));
-          // Reset the clicked button
-          $form_state['clicked_button']['#value'] = t('Unknown Sweaver button.');
-          return;
+          $style->style = t('Undefined');
         }
+        
+        // Check if this name is already used
+        $styles = db_select('sweaver_style_draft', 's')
+          ->fields('s', array('style'))
+          ->execute()
+          ->fetchAll();       
+        $i = '';
+        do {
+          $exist = false;
+          if ($i == '') {
+            $name = $style->style;
+          }
+          else {
+            $name = $style->style.' '.$i;
+          }
+          foreach($styles as $db_style){
+            if ($name == $db_style->style)
+              $exist = TRUE;
+          }
+          $i = ($i == '') ? 2 : $i + 1;
+        } while ($exist);
+        
+        $style->style = $name;        
       }
 
       // Always save the draft version.
       $style->theme = $theme_key;
-      $style->css = $form_state['values']['sweaver-css'];
+      
+      $sweaver = Sweaver::get_instance();
+      $working_style = $sweaver->get_current_style();
+      
+      $sweaver_css = isset($form_state['values']['sweaver-css']) ? $form_state['values']['sweaver-css'] : $working_style->css;
+      $css_rendered = isset($form_state['values']['css-rendered']) ? $form_state['values']['css-rendered'] : '';
+      
+      $style->css = $sweaver_css;
       drupal_write_record('sweaver_style_draft', $style, $update);
-      $this->sweaver_export_file($form_state['values']['css-rendered'], $style);
+      $this->sweaver_export_file($css_rendered, $style);
       $form_state['style_id'] = $style->style_id;
 
       // Publish style.
       if ($submit_type == SWEAVER_STYLE_PUBLISH || $submit_type == SWEAVER_STYLE_SAVE_PUBLISH) {
         $style->active = 1;
-        $this->sweaver_export_file($form_state['values']['css-rendered'], $style, 'live');
+        $this->sweaver_export_file($css_rendered, $style, 'live');
         $message = 'The style @style has been published.';
         db_query("UPDATE {sweaver_style} set active = 0 WHERE theme = :theme", array(':theme' => $style->theme));
         // Find out first if this style already exists or not.
@@ -401,7 +428,7 @@ class sweaver_plugin_styles extends sweaver_plugin {
     $filename = 'sweaver_' . $style->theme . '_'. $style->style_id .'_'. $type .'.css';
 
     // Create the css within the files folder.
-    $sweaver_directory = file_default_scheme() . '://sweaver';
+    $sweaver_directory = 'public://sweaver';
     file_prepare_directory($sweaver_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
     $file = $sweaver_directory . '/' . $filename;
     if (!$fp = fopen($file, 'w')) {
@@ -454,13 +481,13 @@ class sweaver_plugin_styles extends sweaver_plugin {
   public function sweaver_delete_style($style) {
     db_query("DELETE FROM {sweaver_style} WHERE style_id = :style_id", array(':style_id' => $style->style_id));
     db_query("DELETE FROM {sweaver_style_draft} WHERE style_id = :style_id", array(':style_id' => $style->style_id));
-    $draft = file_default_scheme() . '://sweaver/sweaver_' . $style->theme . '_' . $style->style_id . '_draft.css';
-    $live = file_default_scheme() . '://sweaver/sweaver_' . $style->theme . '_' . $style->style_id . '_live.css';
+    $draft = 'public://sweaver/sweaver_' . $style->theme . '_' . $style->style_id . '_draft.css';
+    $live = 'public://sweaver/sweaver_' . $style->theme . '_' . $style->style_id . '_live.css';
     file_unmanaged_delete($draft);
     file_unmanaged_delete($live);
 
     // Remove files tied to theme.
-    $dir = file_default_scheme() . '://sweaver';
+    $dir = 'public://sweaver';
     $mask = '/(.*)' . $style->theme . '_' . $style->style_id . '_(.*)/';
     $files = file_scan_directory($dir, $mask);
     // Get temp files.
@@ -509,7 +536,7 @@ class sweaver_plugin_styles extends sweaver_plugin {
         60 => t('Every minute'),
         120 => t('Every two minutes'),
       ),
-      '#default_value' => variable_get('sweaver_styles_autosave', 10),
+      '#default_value' => variable_get('sweaver_styles_autosave', 0),
       '#description' => t('Check for changes on your style and custom CSS every x seconds. If a change has been identified, sweaver will save those settings in a temporary cache table with AJAX. So leaving a page - or even worse, a browser crash - will make sure you keep your current configuration.'),
     );
     $form = system_settings_form($form);
@@ -593,21 +620,34 @@ class sweaver_plugin_styles extends sweaver_plugin {
     $GLOBALS['devel_shutdown'] = FALSE;
     // Load CTools object cache.
     ctools_include('object-cache');
-
+    
+    $sweaver = Sweaver::get_instance();
+    $working_style = $sweaver->get_current_style();
+        
     // Save current styling.
     $style = new stdClass;
     $style->style_id = 0;
     $style->style = t('Temporary');
-    $style->css = $_POST['css'];
-    $style->customcss = $_POST['customcss'];
-    $style->palette = $_POST['palette'];
-
+    $style->css = isset($_POST['css']) ? $_POST['css'] : $working_style->css;
+    $style->customcss = isset($_POST['customcss']) ? $_POST['customcss'] : $working_style->customcss;
+    $style->palette = isset($_POST['palette']) ? $_POST['palette'] : $working_style->palette;
+    
     // Get the themesettings if applicable and overwrite style id & style name.
-    $sweaver = Sweaver::get_instance();
-    $working_style = $sweaver->get_current_style();
     if (isset($working_style->themesettings)) {
       $style->theme = $working_style->theme;
       $style->themesettings = $working_style->themesettings;
+    }
+
+    // An image might have been uploaded by a managed_file field, permanant status needs to be set up 
+    if (!empty($_POST['managed_file_fid'])) {
+      $fid = filter_input(INPUT_POST, 'managed_file_fid', FILTER_SANITIZE_NUMBER_INT);
+      if ($fid > 0){
+        $file = file_load($fid);
+        $file->status = FILE_STATUS_PERMANENT;
+        $file->description = $file->filename;
+        file_save($file);
+        drupal_write_record('sweaver_image', $file);
+      }
     }
 
     // Save to CTools object cache.

@@ -1,4 +1,3 @@
-; $Id: profile.info,v 1.12 2010/12/20 19:59:42 webchick Exp $
 name = Profile
 description = Supports configurable user profiles.
 package = Core
@@ -11,3 +10,9 @@ configure = admin/config/people/profile
 ; are upgrading a site that uses the Profile module to extend user profiles.
 ; See user_system_info_alter().
 hidden = TRUE
+
+; Information added by Drupal.org packaging script on 2015-06-17
+version = "7.38"
+project = "drupal"
+datestamp = "1434567286"
+

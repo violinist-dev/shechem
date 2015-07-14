@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver.install,v 1.1.2.5.2.9 2010/11/08 14:08:03 swentel Exp $
 
 /**
  * @file
@@ -15,7 +14,7 @@ function sweaver_requirements($phase) {
   $t = get_t();
 
   if ($phase == 'runtime' || $phase == 'install') {
-    $sweaver_directory = file_default_scheme() . '://sweaver';
+    $sweaver_directory = 'public://sweaver';
     if (!file_prepare_directory($sweaver_directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS)) {
       if (!is_dir($sweaver_directory)) {
         $requirements['sweaver_directory'] = array(
@@ -52,6 +51,54 @@ function sweaver_requirements($phase) {
   return $requirements;
 }
 
+function sweaver_update_7100()
+{
+  variable_del('sweaver_plugin_status_sweaver_plugin_customcss');
+  variable_set('sweaver_plugin_status_sweaver_plugin_advanced', true);
+}
+
+function sweaver_update_7101()
+{
+  $editor_form_configuration = array(
+    'one' => array(
+      'title' => t('Font'),
+      'properties' => array(
+        0 => 'font-family',
+        1 => 'font-properties-wrapper',
+        2 => 'vertical-align',
+        ),
+      ),
+    'two' => array(
+      'title' => t('Background'),
+      'properties' => array(
+        0 => 'background-color',
+        1 => 'background-image',
+        2 => 'background-repeat',
+        3 => 'background-attachment',
+        4 => 'background-position',
+        ),
+      ),
+    'three' => array(
+      'title' => t('Borders & Spacing'),
+      'properties' => array(
+        0 => 'position-settings',
+        1 => 'border-style',
+        2 => 'border-color',
+        3 => 'border-collapse',
+        4 => 'border-spacing',
+        ),
+      ),
+    'four' => array(
+      'title' => t('Other'),
+      'properties' => array(
+        0 => 'height',
+        1 => 'width',
+        ),
+      ),
+    );
+  variable_set('sweaver_editor_form_configuration', $editor_form_configuration);
+}
+
 /**
  * Implements hook_install().
  */
@@ -63,48 +110,41 @@ function sweaver_install() {
   // Set default editor configuration.
   $editor_form_configuration = array(
     'one' => array(
-      'title' => 'Font',
+      'title' => t('Font'),
       'properties' => array(
         0 => 'font-family',
-        1 => 'font-style',
-        2 => 'font-weight',
-        3 => 'font-size-wrapper',
-        4 => 'color',
-        5 => 'text-align',
-        6 => 'text-decoration',
-        7 => 'vertical-align',
+        1 => 'font-properties-wrapper',
+        2 => 'vertical-align',
+        ),
       ),
-    ),
     'two' => array(
-      'title' => 'Background',
+      'title' => t('Background'),
       'properties' => array(
         0 => 'background-color',
         1 => 'background-image',
         2 => 'background-repeat',
-        3 => 'background-position',
-        4 => 'background-attachment',
+        3 => 'background-attachment',
+        4 => 'background-position',
+        ),
       ),
-    ),
     'three' => array(
-      'title' => 'Spacing',
+      'title' => t('Borders & Spacing'),
       'properties' => array(
-        0 => 'padding',
-        1 => 'margin',
-        2 => 'border',
-        3 => 'border-style',
-        4 => 'border-color',
-        5 => 'border-collapse',
-        6 => 'border-spacing',
+        0 => 'position-settings',
+        1 => 'border-style',
+        2 => 'border-color',
+        3 => 'border-collapse',
+        4 => 'border-spacing',
+        ),
       ),
-    ),
     'four' => array(
-      'title' => 'Other',
+      'title' => t('Other'),
       'properties' => array(
         0 => 'height',
         1 => 'width',
+        ),
       ),
-    ),
-  );
+    );
   variable_set('sweaver_editor_form_configuration', $editor_form_configuration);
 
   // Selector order.
@@ -136,14 +176,13 @@ function sweaver_install() {
     'sweaver_plugin' => -51,
     'sweaver_plugin_editor' => -49,
     'sweaver_plugin_styles' => -48,
-    'sweaver_plugin_customcss' => -47,
+    'sweaver_plugin_advanced' => -47,
     'sweaver_plugin_palettes' => -46,
     'sweaver_plugin_images' => -45,
     'sweaver_plugin_themeswitch' => -44,
     'sweaver_plugin_themesettings' => -43,
     'sweaver_plugin_themeclasses' => -42,
     'sweaver_plugin_fontface' => -41,
-    'sweaver_plugin_ds' => -40,
     'sweaver_plugin_kb' => -39,
   );
   variable_set('sweaver_plugins_weight', $plugins_weight);

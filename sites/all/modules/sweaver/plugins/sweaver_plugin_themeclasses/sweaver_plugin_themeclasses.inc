@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_themeclasses.inc,v 1.1.2.3.2.9 2010/11/09 09:43:35 swentel Exp $
 
 /**
  * @file

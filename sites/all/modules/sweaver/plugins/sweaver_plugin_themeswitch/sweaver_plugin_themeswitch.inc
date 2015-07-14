@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_themeswitch.inc,v 1.1.2.4.2.8 2010/11/05 23:54:07 swentel Exp $
 
 /**
  * @file

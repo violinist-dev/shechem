@@ -1,8 +1,7 @@
 <?php
-// $Id: query.inc,v 1.60 2010/12/31 20:43:43 webchick Exp $
 
 /**
- * @ingroup database
+ * @addtogroup database
  * @{
  */
 
@@ -23,6 +22,9 @@ interface QueryConditionInterface {
    * parameters, they are taken as $field and $value with $operator having a
    * value of IN if $value is an array and = otherwise.
    *
+   * Do not use this method to test for NULL values. Instead, use
+   * QueryConditionInterface::isNull() or QueryConditionInterface::isNotNull().
+   *
    * @param $field
    *   The name of the field to check. If you would like to add a more complex
    *   condition involving operators or functions, use where().
@@ -37,6 +39,9 @@ interface QueryConditionInterface {
    *
    * @return QueryConditionInterface
    *   The called object.
+   *
+   * @see QueryConditionInterface::isNull()
+   * @see QueryConditionInterface::isNotNull()
    */
   public function condition($field, $value = NULL, $operator = NULL);
 
@@ -78,7 +83,7 @@ interface QueryConditionInterface {
 
   /**
    * Sets a condition that the specified subquery returns values.
-   * 
+   *
    * @param SelectQueryInterface $select
    *   The subquery that must contain results.
    *
@@ -86,10 +91,10 @@ interface QueryConditionInterface {
    *   The called object.
    */
   public function exists(SelectQueryInterface $select);
-  
+
   /**
    * Sets a condition that the specified subquery returns no values.
-   * 
+   *
    * @param SelectQueryInterface $select
    *   The subquery that must not contain results.
    *
@@ -97,7 +102,7 @@ interface QueryConditionInterface {
    *   The called object.
    */
   public function notExists(SelectQueryInterface $select);
-  
+
   /**
    * Gets a complete list of all conditions in this conditional clause.
    *
@@ -143,7 +148,15 @@ interface QueryConditionInterface {
    *   The query this condition belongs to. If not given, the current query is
    *   used.
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL);
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder);
+
+  /**
+   * Check whether a condition has been previously compiled.
+   *
+   * @return
+   *   TRUE if the condition has been previously compiled.
+   */
+  public function compiled();
 }
 
 
@@ -240,12 +253,17 @@ interface QueryAlterableInterface {
 interface QueryPlaceholderInterface {
 
   /**
+   * Returns a unique identifier for this object.
+   */
+  public function uniqueIdentifier();
+
+  /**
    * Returns the next placeholder ID for the query.
    *
    * @return
    *   The next available placeholder ID as an integer.
    */
-  function nextPlaceholder();
+  public function nextPlaceholder();
 }
 
 /**
@@ -265,14 +283,14 @@ abstract class Query implements QueryPlaceholderInterface {
 
   /**
    * The target of the connection object.
-   * 
+   *
    * @var string
    */
   protected $connectionTarget;
 
   /**
    * The key of the connection object.
-   * 
+   *
    * @var string
    */
   protected $connectionKey;
@@ -283,6 +301,11 @@ abstract class Query implements QueryPlaceholderInterface {
    * @var array
    */
   protected $queryOptions;
+
+  /**
+   * A unique identifier for this query object.
+   */
+  protected $uniqueIdentifier;
 
   /**
    * The placeholder counter.
@@ -305,6 +328,8 @@ abstract class Query implements QueryPlaceholderInterface {
    *   Array of query options.
    */
   public function __construct(DatabaseConnection $connection, $options) {
+    $this->uniqueIdentifier = uniqid('', TRUE);
+
     $this->connection = $connection;
     $this->connectionKey = $this->connection->getKey();
     $this->connectionTarget = $this->connection->getTarget();
@@ -322,10 +347,17 @@ abstract class Query implements QueryPlaceholderInterface {
   }
 
   /**
-  * Implements the magic __wakeup function to reconnect to the database.
+   * Implements the magic __wakeup function to reconnect to the database.
    */
   public function __wakeup() {
     $this->connection = Database::getConnection($this->connectionTarget, $this->connectionKey);
+  }
+
+  /**
+   * Implements the magic __clone function.
+   */
+  public function __clone() {
+    $this->uniqueIdentifier = uniqid('', TRUE);
   }
 
   /**
@@ -345,6 +377,13 @@ abstract class Query implements QueryPlaceholderInterface {
   abstract public function __toString();
 
   /**
+   * Returns a unique identifier for this object.
+   */
+  public function uniqueIdentifier() {
+    return $this->uniqueIdentifier;
+  }
+
+  /**
    * Gets the next placeholder value for this query object.
    *
    * @return int
@@ -361,6 +400,9 @@ abstract class Query implements QueryPlaceholderInterface {
    * query log or the list of active queries on an SQL server. This allows
    * for easier debugging and allows you to more easily find where a query
    * with a performance problem is being generated.
+   *
+   * The comment string will be sanitized to remove * / and other characters
+   * that may terminate the string early so as to avoid SQL injection attacks.
    *
    * @param $comment
    *   The comment string to be inserted into the query.
@@ -624,9 +666,8 @@ class InsertQuery extends Query {
    *   The prepared statement.
    */
   public function __toString() {
-
-    // Create a comments string to prepend to the query.
-    $comments = (!empty($this->comments)) ? '/* ' . implode('; ', $this->comments) . ' */ ' : '';
+    // Create a sanitized comment string to prepend to the query.
+    $comments = $this->connection->makeComment($this->comments);
 
     // Default fields are always placed first for consistency.
     $insert_fields = array_merge($this->defaultFields, $this->insertFields);
@@ -669,10 +710,11 @@ class InsertQuery extends Query {
       // first call to fields() does have an effect.
       $this->fields(array_merge(array_keys($this->fromQuery->getFields()), array_keys($this->fromQuery->getExpressions())));
     }
-
-    // Don't execute query without fields.
-    if (count($this->insertFields) + count($this->defaultFields) == 0) {
-      throw new NoFieldsException('There are no fields available to insert with.');
+    else {
+      // Don't execute query without fields.
+      if (count($this->insertFields) + count($this->defaultFields) == 0) {
+        throw new NoFieldsException('There are no fields available to insert with.');
+      }
     }
 
     // If no values have been added, silently ignore this query. This can happen
@@ -763,7 +805,7 @@ class DeleteQuery extends Query implements QueryConditionInterface {
     $this->condition->notExists($select);
     return $this;
   }
-  
+
   /**
    * Implements QueryConditionInterface::conditions().
    */
@@ -789,15 +831,22 @@ class DeleteQuery extends Query implements QueryConditionInterface {
   /**
    * Implements QueryConditionInterface::compile().
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL) {
-    return $this->condition->compile($connection, isset($queryPlaceholder) ? $queryPlaceholder : $this);
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder) {
+    return $this->condition->compile($connection, $queryPlaceholder);
+  }
+
+  /**
+   * Implements QueryConditionInterface::compiled().
+   */
+  public function compiled() {
+    return $this->condition->compiled();
   }
 
   /**
    * Executes the DELETE query.
    *
    * @return
-   *   The return value is dependant on the database connection.
+   *   The return value is dependent on the database connection.
    */
   public function execute() {
     $values = array();
@@ -816,9 +865,8 @@ class DeleteQuery extends Query implements QueryConditionInterface {
    *   The prepared statement.
    */
   public function __toString() {
-
-    // Create a comments string to prepend to the query.
-    $comments = (!empty($this->comments)) ? '/* ' . implode('; ', $this->comments) . ' */ ' : '';
+    // Create a sanitized comment string to prepend to the query.
+    $comments = $this->connection->makeComment($this->comments);
 
     $query = $comments . 'DELETE FROM {' . $this->connection->escapeTable($this->table) . '} ';
 
@@ -864,8 +912,15 @@ class TruncateQuery extends Query {
   /**
    * Implements QueryConditionInterface::compile().
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL) {
-    return $this->condition->compile($connection, isset($queryPlaceholder) ? $queryPlaceholder : $this);
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder) {
+    return $this->condition->compile($connection, $queryPlaceholder);
+  }
+
+  /**
+   * Implements QueryConditionInterface::compiled().
+   */
+  public function compiled() {
+    return $this->condition->compiled();
   }
 
   /**
@@ -885,10 +940,20 @@ class TruncateQuery extends Query {
    *   The prepared statement.
    */
   public function __toString() {
-    // Create a comments string to prepend to the query.
-    $comments = (!empty($this->comments)) ? '/* ' . implode('; ', $this->comments) . ' */ ' : '';
+    // Create a sanitized comment string to prepend to the query.
+    $comments = $this->connection->makeComment($this->comments);
 
-    return $comments . 'TRUNCATE {' . $this->connection->escapeTable($this->table) . '} ';
+    // In most cases, TRUNCATE is not a transaction safe statement as it is a
+    // DDL statement which results in an implicit COMMIT. When we are in a
+    // transaction, fallback to the slower, but transactional, DELETE.
+    // PostgreSQL also locks the entire table for a TRUNCATE strongly reducing
+    // the concurrency with other transactions.
+    if ($this->connection->inTransaction()) {
+      return $comments . 'DELETE FROM {' . $this->connection->escapeTable($this->table) . '}';
+    }
+    else {
+      return $comments . 'TRUNCATE {' . $this->connection->escapeTable($this->table) . '} ';
+    }
   }
 }
 
@@ -999,7 +1064,7 @@ class UpdateQuery extends Query implements QueryConditionInterface {
     $this->condition->notExists($select);
     return $this;
   }
-  
+
   /**
    * Implements QueryConditionInterface::conditions().
    */
@@ -1025,8 +1090,15 @@ class UpdateQuery extends Query implements QueryConditionInterface {
   /**
    * Implements QueryConditionInterface::compile().
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL) {
-    return $this->condition->compile($connection, isset($queryPlaceholder) ? $queryPlaceholder : $this);
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder) {
+    return $this->condition->compile($connection, $queryPlaceholder);
+  }
+
+  /**
+   * Implements QueryConditionInterface::compiled().
+   */
+  public function compiled() {
+    return $this->condition->compiled();
   }
 
   /**
@@ -1112,9 +1184,8 @@ class UpdateQuery extends Query implements QueryConditionInterface {
    *   The prepared statement.
    */
   public function __toString() {
-
-    // Create a comments string to prepend to the query.
-    $comments = (!empty($this->comments)) ? '/* ' . implode('; ', $this->comments) . ' */ ' : '';
+    // Create a sanitized comment string to prepend to the query.
+    $comments = $this->connection->makeComment($this->comments);
 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.
@@ -1485,7 +1556,7 @@ class MergeQuery extends Query implements QueryConditionInterface {
     $this->condition->notExists($select);
     return $this;
   }
-  
+
   /**
    * Implements QueryConditionInterface::conditions().
    */
@@ -1511,8 +1582,15 @@ class MergeQuery extends Query implements QueryConditionInterface {
   /**
    * Implements QueryConditionInterface::compile().
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL) {
-    return $this->condition->compile($connection, isset($queryPlaceholder) ? $queryPlaceholder : $this);
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder) {
+    return $this->condition->compile($connection, $queryPlaceholder);
+  }
+
+  /**
+   * Implements QueryConditionInterface::compiled().
+   */
+  public function compiled() {
+    return $this->condition->compiled();
   }
 
   /**
@@ -1528,55 +1606,43 @@ class MergeQuery extends Query implements QueryConditionInterface {
   }
 
   public function execute() {
-    // Wrap multiple queries in a transaction, if the database supports it.
-    $transaction = $this->connection->startTransaction();
-    try {
-      if (!count($this->condition)) {
-        throw new InvalidMergeQueryException(t('Invalid merge query: no conditions'));
+    if (!count($this->condition)) {
+      throw new InvalidMergeQueryException(t('Invalid merge query: no conditions'));
+    }
+    $select = $this->connection->select($this->conditionTable)
+      ->condition($this->condition);
+    $select->addExpression('1');
+    if (!$select->execute()->fetchField()) {
+      try {
+        $insert = $this->connection->insert($this->table)->fields($this->insertFields);
+        if ($this->defaultFields) {
+          $insert->useDefaults($this->defaultFields);
+        }
+        $insert->execute();
+        return self::STATUS_INSERT;
       }
-      $select = $this->connection->select($this->conditionTable)
-        ->condition($this->condition)
-        ->forUpdate();
-      $select->addExpression('1');
-      if (!$select->execute()->fetchField()) {
-        try {
-          $insert = $this->connection->insert($this->table)->fields($this->insertFields);
-          if ($this->defaultFields) {
-            $insert->useDefaults($this->defaultFields);
-          }
-          $insert->execute();
-          return MergeQuery::STATUS_INSERT;
+      catch (Exception $e) {
+        // The insert query failed, maybe it's because a racing insert query
+        // beat us in inserting the same row. Retry the select query, if it
+        // returns a row, ignore the error and continue with the update
+        // query below.
+        if (!$select->execute()->fetchField()) {
+          throw $e;
         }
-        catch (Exception $e) {
-          // The insert query failed, maybe it's because a racing insert query
-          // beat us in inserting the same row. Retry the select query, if it
-          // returns a row, ignore the error and continue with the update
-          // query below.
-          if (!$select->execute()->fetchField()) {
-            throw $e;
-          }
-        }
-      }
-      if ($this->needsUpdate) {
-        $update = $this->connection->update($this->table)
-          ->fields($this->updateFields)
-          ->condition($this->condition);
-        if ($this->expressionFields) {
-          foreach ($this->expressionFields as $field => $data) {
-            $update->expression($field, $data['expression'], $data['arguments']);
-          }
-        }
-        $update->execute();
-        return MergeQuery::STATUS_UPDATE;
       }
     }
-    catch (Exception $e) {
-      // Something really wrong happened here, bubble up the exception to the
-      // caller.
-      $transaction->rollback();
-      throw $e;
-    }
-    // Transaction commits here where $transaction looses scope.
+    if ($this->needsUpdate) {
+      $update = $this->connection->update($this->table)
+        ->fields($this->updateFields)
+        ->condition($this->condition);
+      if ($this->expressionFields) {
+        foreach ($this->expressionFields as $field => $data) {
+          $update->expression($field, $data['expression'], $data['arguments']);
+        }
+      }
+      $update->execute();
+      return self::STATUS_UPDATE;
+     }
   }
 }
 
@@ -1610,6 +1676,11 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
   protected $changed = TRUE;
 
   /**
+   * The identifier of the query placeholder this condition has been compiled against.
+   */
+  protected $queryPlaceholderIdentifier;
+
+  /**
    * Constructs a DataBaseCondition object.
    *
    * @param string $conjunction
@@ -1623,7 +1694,7 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
    * Implements Countable::count().
    *
    * Returns the size of this conditional. The size of the conditional is the
-   * size of its conditional array minus one, because one element is the the
+   * size of its conditional array minus one, because one element is the
    * conjunction.
    */
   public function count() {
@@ -1690,14 +1761,14 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
   public function exists(SelectQueryInterface $select) {
     return $this->condition('', $select, 'EXISTS');
   }
-  
+
   /**
    * Implements QueryConditionInterface::notExists().
    */
   public function notExists(SelectQueryInterface $select) {
     return $this->condition('', $select, 'NOT EXISTS');
   }
-  
+
   /**
    * Implements QueryConditionInterface::conditions().
    */
@@ -1719,8 +1790,12 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
   /**
    * Implements QueryConditionInterface::compile().
    */
-  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder = NULL) {
-    if ($this->changed) {
+  public function compile(DatabaseConnection $connection, QueryPlaceholderInterface $queryPlaceholder) {
+    // Re-compile if this condition changed or if we are compiled against a
+    // different query placeholder object.
+    if ($this->changed || isset($this->queryPlaceholderIdentifier) && ($this->queryPlaceholderIdentifier != $queryPlaceholder->uniqueIdentifier())) {
+      $this->queryPlaceholderIdentifier = $queryPlaceholder->uniqueIdentifier();
+
       $condition_fragments = array();
       $arguments = array();
 
@@ -1793,6 +1868,13 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
   }
 
   /**
+   * Implements QueryConditionInterface::compiled().
+   */
+  public function compiled() {
+    return !$this->changed;
+  }
+
+  /**
    * Implements PHP magic __toString method to convert the conditions to string.
    *
    * @return string
@@ -1815,8 +1897,13 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
   function __clone() {
     $this->changed = TRUE;
     foreach ($this->conditions as $key => $condition) {
-      if ($condition['field'] instanceOf QueryConditionInterface) {
-        $this->conditions[$key]['field'] = clone($condition['field']);
+      if ($key !== '#conjunction') {
+        if ($condition['field'] instanceOf QueryConditionInterface) {
+          $this->conditions[$key]['field'] = clone($condition['field']);
+        }
+        if ($condition['value'] instanceOf SelectQueryInterface) {
+          $this->conditions[$key]['value'] = clone($condition['value']);
+        }
       }
     }
   }
@@ -1872,5 +1959,5 @@ class DatabaseCondition implements QueryConditionInterface, Countable {
 }
 
 /**
- * @} End of "ingroup database".
+ * @} End of "addtogroup database".
  */

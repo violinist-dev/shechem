@@ -1,5 +1,4 @@
 <?php
-// $Id: common_test.module,v 1.13 2010/08/17 21:31:13 dries Exp $
 
 /**
  * @file
@@ -99,6 +98,14 @@ function common_test_drupal_goto_alter(&$path, &$options, &$http_response_code) 
 function common_test_destination() {
   $destination = drupal_get_destination();
   print "The destination: " . check_plain($destination['destination']);
+}
+
+/**
+ * Applies #printed to an element to help test #pre_render.
+ */
+function common_test_drupal_render_printing_pre_render($elements) {
+  $elements['#printed'] = TRUE;
+  return $elements;
 }
 
 /**
@@ -253,4 +260,17 @@ function common_test_js_and_css_querystring() {
    // A relative URI may have a query string.
    drupal_add_css('/' . drupal_get_path('module', 'node') . '/node-fake.css?arg1=value1&arg2=value2');
    return '';
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * System module should handle if a module does not catch an exception and keep
+ * cron going.
+ *
+ * @see common_test_cron_helper()
+ *
+ */
+function common_test_cron() {
+  throw new Exception(t('Uncaught exception'));
 }

@@ -1,6 +1,6 @@
-sites/www.shechem.org.uk/files
-sites/www.shechem.org.uk/settings.php
-sites/www.shechem.org.uk/local.settings.php
-sites/www.shechem.org.uk/private
-.idea
-sites/default
+# Ignore configuration files that may contain sensitive information.
+sites/*/settings*.php
+
+# Ignore paths that contain user-generated content.
+sites/*/files
+sites/*/private

@@ -1,4 +1,3 @@
-// $Id: sweaver_plugin_palettes.js,v 1.1.4.5 2010/11/08 16:03:04 jyve Exp $
 
 /**
  * Add an extra color css
@@ -13,7 +12,7 @@ $(document).ready(function() {
 
   // Check if we need to load the stylesheet when the editor is active.
   var palette = $('#sweaver_plugin_palettes [name=sweaver_plugin_palette]').val();
-  console 
+  
   if (palette != '') {
     // Add a external stylesheet container in the head section.
     var link = '<link id="sweaver-palette" href="' + $('#palette-' + palette + ' .file').text() + '" media="all" rel="stylesheet" />';

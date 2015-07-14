@@ -1,4 +1,3 @@
-/* $Id: API.txt,v 1.1.2.4.2.9 2010/11/08 15:07:57 swentel Exp $ */
 
 Table of contents
 ------------------
@@ -242,6 +241,18 @@ class pluginname extends sweaver_plugin {
   function sweaver_menu_callback_submit($form, &$form_state) {
     // Do something with the submitted values.
   }
+  
+  /**
+   * Return false to not show editor.
+   */
+  public function show_editor() {
+  }
+
+  /**
+   * Return true to allow access and false to deny.
+   */
+  public function sweaver_menu_access_callback($args) {
+  }  
 }
 
 ------------------------------------------------------
@@ -378,6 +389,28 @@ sweaver[selectors][h1] = Heading 1
 The order is how you define it in the info file.
 In the backend you can select if these selectors
 are to be used instead of those in the database.
+
+Those selectors will be exclusive. Which means that the
+user will only be able to select and modify those defined selectors
+
+To define inclusive selectors (which will be added to others 
+created in the regestry) you need to add options to your selectors
+
+sweaver[selectors][h4][name] = h4
+sweaver[selectors][h4][description] = Heading 4
+sweaver[selectors][h4][selector_highlight] = TRUE
+sweaver[selectors][h4][weight] = 20
+sweaver[selectors][h4][type] = add
+
+ - The name must contain only lowercase letters, numbers, underscores or hyphens
+ and must be unique.
+ - The selector description is the text shown to the Sweaver front end user
+ - The selector_highlight property define weither or not the selector should be
+ highlighted by default
+ - The weight is a very important element as it define the priority of this
+ selector on others. A value between 20 and 50 is advisable for major selectors
+ and a value between 70 and 100 for minors ones.
+ - The type is either set as add for inclusive or replace f r excluse selector
 
 Note: if you add new theme extensions but they don't show up,
 then you need to clear the theme registry.

@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver-plugin-editor-config-editor.tpl.php,v 1.1.2.1 2010/07/22 11:09:13 swentel Exp $
 
 /**
  * @file

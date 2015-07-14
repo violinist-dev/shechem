@@ -1,4 +1,3 @@
-/* $Id: admin_menu.color.css,v 1.1 2009/05/07 00:34:18 sun Exp $ */
 
 /**
  * @file
@@ -33,8 +32,7 @@
 #admin-menu li li.expandable {
   background-color: #b93f3f;
 }
-#admin-menu li li:hover,
-#admin-menu li li.iehover {
+#admin-menu li li:hover {
   background-color: #690f0f;
 }
 #admin-menu li li.expandable:hover a,

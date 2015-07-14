@@ -1,5 +1,4 @@
 <?php
-// $Id: field_test.entity.inc,v 1.17 2010/11/20 19:57:01 webchick Exp $
 
 /**
  * @file
@@ -10,6 +9,12 @@
  * Implements hook_entity_info().
  */
 function field_test_entity_info() {
+  // If requested, clear the field cache while this hook is being called. See
+  // testFieldInfoCache().
+  if (variable_get('field_test_clear_info_cache_in_hook_entity_info', FALSE)) {
+    field_info_cache_clear();
+  }
+
   $bundles = variable_get('field_test_bundles', array('test_bundle' => array('label' => 'Test Bundle')));
   $test_entity_modes = array(
     'full' => array(
@@ -24,7 +29,7 @@ function field_test_entity_info() {
 
   return array(
     'test_entity' => array(
-      'name' => t('Test Entity'),
+      'label' => t('Test Entity'),
       'fieldable' => TRUE,
       'field cache' => FALSE,
       'base table' => 'test_entity',
@@ -39,7 +44,7 @@ function field_test_entity_info() {
     ),
     // This entity type doesn't get form handling for now...
     'test_cacheable_entity' => array(
-      'name' => t('Test Entity, cacheable'),
+      'label' => t('Test Entity, cacheable'),
       'fieldable' => TRUE,
       'field cache' => TRUE,
       'entity keys' => array(
@@ -51,7 +56,7 @@ function field_test_entity_info() {
       'view modes' => $test_entity_modes,
     ),
     'test_entity_bundle_key' => array(
-      'name' => t('Test Entity with a bundle key.'),
+      'label' => t('Test Entity with a bundle key.'),
       'base table' => 'test_entity_bundle_key',
       'fieldable' => TRUE,
       'field cache' => FALSE,
@@ -59,12 +64,12 @@ function field_test_entity_info() {
         'id' => 'ftid',
         'bundle' => 'fttype',
       ),
-      'bundles' => array('bundle1' => array('label' => 'Bundle1'), 'bundle2' => array('label' => 'Bundle2')),
+      'bundles' => array('bundle1' => array('label' => 'Bundle1'), 'bundle2' => array('label' => 'Bundle2')) + $bundles,
       'view modes' => $test_entity_modes,
     ),
     // In this case, the bundle key is not stored in the database.
     'test_entity_bundle' => array(
-      'name' => t('Test Entity with a specified bundle.'),
+      'label' => t('Test Entity with a specified bundle.'),
       'base table' => 'test_entity_bundle',
       'fieldable' => TRUE,
       'controller class' => 'TestEntityBundleController',
@@ -73,12 +78,12 @@ function field_test_entity_info() {
         'id' => 'ftid',
         'bundle' => 'fttype',
       ),
-      'bundles' => array('test_entity_2' => array('label' => 'Test entity 2')),
+      'bundles' => array('test_entity_2' => array('label' => 'Test entity 2')) + $bundles,
       'view modes' => $test_entity_modes,
     ),
     // @see EntityPropertiesTestCase::testEntityLabel()
     'test_entity_no_label' => array(
-      'name' => t('Test entity without label'),
+      'label' => t('Test entity without label'),
       'fieldable' => TRUE,
       'field cache' => FALSE,
       'base table' => 'test_entity',
@@ -91,7 +96,7 @@ function field_test_entity_info() {
       'view modes' => $test_entity_modes,
     ),
     'test_entity_label' => array(
-      'name' => t('Test entity label'),
+      'label' => t('Test entity label'),
       'fieldable' => TRUE,
       'field cache' => FALSE,
       'base table' => 'test_entity',
@@ -105,7 +110,7 @@ function field_test_entity_info() {
       'view modes' => $test_entity_modes,
     ),
     'test_entity_label_callback' => array(
-      'name' => t('Test entity label callback'),
+      'label' => t('Test entity label callback'),
       'fieldable' => TRUE,
       'field cache' => FALSE,
       'base table' => 'test_entity',

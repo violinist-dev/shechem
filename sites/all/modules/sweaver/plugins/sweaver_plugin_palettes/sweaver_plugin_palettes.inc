@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_palettes.inc,v 1.1.4.9 2010/11/08 15:56:32 jyve Exp $
 
 /**
  * @file

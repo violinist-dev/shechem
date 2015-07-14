@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver_plugin_editor.inc,v 1.1.2.9.2.12 2010/11/06 16:39:29 swentel Exp $
 
 /**
  * @file
@@ -179,12 +178,7 @@ class sweaver_plugin_editor extends sweaver_plugin {
 
     $properties = sweaver_object_load(NULL, 'property');
     $sweaver_editor_form_configuration = variable_get('sweaver_editor_form_configuration', array());
-
-    // Switcher.
-    $tab_switcher = '<div id="changes-toggler">'. t('Show changes') .'</div>';
-    $form['editor_switcher'] = array(
-      '#markup' => $tab_switcher,
-    );
+    
 
     // Images.
     $images = array('' => t('Theme default'), 'none' => t('No image'));
@@ -211,7 +205,6 @@ class sweaver_plugin_editor extends sweaver_plugin {
           $property = $properties[$property_key];
           sweaver_export_check_serialized_keys($property);
           $form[$property->name] = $this->sweaver_property_element($property, $images);
-
           // Any children?
           if ($property->property_type == 'parent') {
             foreach ($properties as $key => $prop) {
@@ -222,11 +215,6 @@ class sweaver_plugin_editor extends sweaver_plugin {
         }
       }
     }
-
-    // Changes.
-    $form['editor_changes'] = array(
-      '#markup' => '<div id="editor-changes"></div>',
-    );
 
     return $form;
   }
@@ -261,12 +249,32 @@ class sweaver_plugin_editor extends sweaver_plugin {
       // Combine all vertical tabs.
       $vertical_tabs .= '<div id="tab-'. $key .'" class="vertical-tab"><a href="#" '. $tab_class .'>'. $container_value['title'] .'</a></div>';
 
+      //TODO: All of the container count method has to be rethought
       // Combine all properties in containers.
       $i = 0;
       $container_count = 1;
-      $container_total = ceil(count($container_value['properties'])/5);
-
+      $container_total = 1;
+      foreach ($container_value['properties'] as $property) {
+        //var_dump($form[$name]['form'][$property]);
+        if (isset($form[$name]['form'][$property]['#theme'])){
+            if ($form[$name]['form'][$property]['#theme'] == 'table') {
+                $form[$name]['form'][$property]['#rows'] = $this->sweaver_recursive_table_element($form[$name]['form'][$property]['#rows'], $form[$name]['form'][$property]);
+                $i = 4; // The container is closed after the table
+            }
+            elseif($form[$name]['form'][$property]['#name'] == 'background-image'){
+                $i = 4; // The container is closed after the table
+            }
+        }
+        $i++;
+        if ($i == 5){
+          $container_total++;
+          $i = 0;
+        }
+      }
+      $i = 0;
+      
       $containers .= '<div id="container-'. $key .'" class="container-wrapper">';
+      
       foreach ($container_value['properties'] as $property) {
         if ($i == 0) {
           // Add first/last classes to the containers.
@@ -279,7 +287,17 @@ class sweaver_plugin_editor extends sweaver_plugin {
           }
           $containers .= '<div class="container '. $container_class .'"><div class="container-inner">';
         }
-
+        
+        if (isset($form[$name]['form'][$property]['#theme'])){
+            if ($form[$name]['form'][$property]['#theme'] == 'table') {
+                $form[$name]['form'][$property]['#rows'] = $this->sweaver_recursive_table_element($form[$name]['form'][$property]['#rows'], $form[$name]['form'][$property]);
+                $i = 4; // The container is closed after the table
+            }
+            elseif($form[$name]['form'][$property]['#name'] == 'background-image'){
+                $i = 4; // The container is closed after the table
+            }
+        }
+        
         $containers .= drupal_render($form[$name]['form'][$property]);
         $i++;
         if ($i == 5) {
@@ -297,14 +315,11 @@ class sweaver_plugin_editor extends sweaver_plugin {
     $output .= '<div class="vertical-tabs">' . $vertical_tabs . '</div>';
     $output .= '<div class="vertical-content">' . $containers . '</div>';
 
-    // Changes
-    $output .= drupal_render($form[$name]['form']['editor_changes']);
-
     $output .= '</div>';
 
     $vars['tabs_data'][$name]['content'] = $output;
   }
-
+  
   /**
    * Frontend css and js.
    */
@@ -333,14 +348,53 @@ class sweaver_plugin_editor extends sweaver_plugin {
     if (variable_get('sweaver_selectors_source', FALSE)) {
       $theme_info = sweaver_get_theme_info($theme_key);
       if (isset($theme_info['sweaver']['selectors'])) {
-        foreach ($theme_info['sweaver']['selectors'] as $selector_name => $selector_description) {
+        foreach ($theme_info['sweaver']['selectors'] as $selector_selector => $selector_description) {
           $selector = new stdClass;
-          $name = str_replace(array('', '.', '-'), array(''), $selector_name);
-          $selector->name = $name;
-          $selector->description = $selector_description;
-          $selector->selector_selector = $selector_name;
-          $selector->selector_highlight = FALSE;
-          $selectors[$name] = $selector;
+          if (!is_array($selector_description)) {
+            $name = str_replace(array('', '.', '-'), array(''), $selector_selector);
+            $selector->name = $name;
+            $selector->description = $selector_description;
+            $selector->selector_selector = $selector_selector;
+            $selector->selector_highlight = FALSE;
+            $selectors[$name] = $selector;
+          }
+          else {
+            if (isset($selector_description['type'])) {
+              if ($selector_description['type'] == 'replace') {
+                if (isset($selector_description['name'])) {
+                  $name = $selector_description['name'];
+                }
+                else {
+                  $name = str_replace(array(
+                    '',
+                    '.',
+                    '-'), array(''), $selector_selector);
+                }
+                $selector->name = $name;
+                $selector->description = isset($selector_description['description']) ? $selector_description['description'] :
+                  $selector->name;
+                $selector->selector_selector = $selector_selector;
+
+                if (isset($selector_description['selector_highlight'])) {
+                  if ($selector_description['selector_highlight']) {
+                    $selector->selector_highlight = true;
+                  }
+                  else {
+                    $selector->selector_highlight = false;
+                  }
+                }
+                else {
+                  $selector->selector_highlight = false;
+                }
+
+                if (isset($selector_description['weight'])) {
+                  $selector->weight = $selector_description['weight'];
+                }
+
+                $selectors[$selector->name] = $selector;
+              }
+            }
+          }
         }
 
         if (!empty($selectors)) {
@@ -348,16 +402,26 @@ class sweaver_plugin_editor extends sweaver_plugin {
         }
       }
     }
-
+    
     if ($default_source) {
       $selectors = sweaver_object_load(NULL, 'selector');
       $order = variable_get('sweaver_selector_order', array());
     }
-
-    $new_weight = 100;
+    
+    $new_weight = 20;
     $js_selectors = array();
     foreach ($selectors as $key => $selector) {
-      $weight = isset($order[$selector->name]) ? $order[$selector->name] : $new_weight++;
+      if (isset($order[$key])) {
+        $weight = $order[$key];
+      }
+      else {
+        if (isset($selector->weight)) {
+          $weight = $selector->weight;
+        }
+        else {
+          $weight = $new_weight++;
+        }
+      }
       $options = array(
         'weight' => $weight,
         'name' => $selector->name,
@@ -397,7 +461,7 @@ class sweaver_plugin_editor extends sweaver_plugin {
       $js_properties[$key] = $options;
       }
     }
-
+    
     // Excluded selectors.
     $js_excluded_selectors = array();
     $exclude_selectors = variable_get('sweaver_selectors_exclude', SWEAVER_SELECTORS_EXCLUDE);
@@ -428,6 +492,9 @@ class sweaver_plugin_editor extends sweaver_plugin {
     $inline_settings['sweaver']['exclude_classes'] = $js_excluded_classes;
     $inline_settings['sweaver']['preview_selector'] = variable_get('sweaver_preview_selection', TRUE);
     $inline_settings['sweaver']['combined_selectors'] = variable_get('sweaver_combined_selectors', FALSE);
+    $inline_settings['sweaver']['translate_path'] = variable_get('sweaver_translate_path', TRUE);
+    global $base_root;
+    $inline_settings['sweaver']['base_root'] = $base_root;
   }
 
   /**
@@ -450,9 +517,18 @@ class sweaver_plugin_editor extends sweaver_plugin {
             'title' => $property->description,
             'autocomplete' => 'off',
           ),
+          '#prefix' => isset($property->css_prefix) ? $property->css_prefix : '',
+          '#suffix' => isset($property->css_suffix) ? $property->css_suffix : '',          
         );
         break;
-
+      
+      // New Type of Field implemented to improve the interface
+      case 'checkbox':
+        return array(
+          '#markup' => '<div id="button-checkbox-'.$property->name.'" class="editor_icons form-item-'.$property->name.'" title="'.$property->description.'"></div>',
+          );
+        break;
+      
       case 'color':
         return array(
           '#markup' =>  '<div id="edit-'. $property->name .'-wrapper" class="form-item clearfix">
@@ -461,17 +537,32 @@ class sweaver_plugin_editor extends sweaver_plugin {
             <div class="colorSelector"><div style="background-color: #ffffff"></div>
             </div></div></div>'
         );
-        break;
+        break;                   
 
       case 'image':
-        return array(
-          '#type' => 'select',
-          '#title' => $property->description,
-          '#options' => $images,
-          '#attributes' => array(
-            'class' => array('background-image'),
-          ),
-        );
+        $sweaver = Sweaver::get_instance();
+        if ($sweaver->is_plugin_activated('sweaver_plugin_images')){
+          return array(
+            '#type' => 'select',
+            '#title' => $property->description,
+            '#options' => $images,
+            '#attributes' => array(
+              'class' => array('background-image'),
+            ),
+          );
+        }
+        else {
+          return array(
+            '#type' => 'managed_file',
+            '#title' => $property->description,
+            '#size' => '40',
+            '#upload_location' => 'public://sweaver/',
+            '#upload_validators' => array(
+              'file_validate_is_image' => array(),
+              'file_validate_extensions' => array('png gif jpg jpeg'),
+            ),
+          ); 
+        }
         break;
 
       case 'select':
@@ -479,16 +570,58 @@ class sweaver_plugin_editor extends sweaver_plugin {
           '#type' => 'select',
           '#title' => $property->description,
           '#options' => $property->property_options,
+          '#prefix' => isset($property->css_prefix) ? $property->css_prefix : '',
+          '#suffix' => isset($property->css_suffix) ? $property->css_suffix : '',
         );
         break;
 
       case 'parent':
+        if (empty($property->property_options)) {
+            return array(
+              '#type' => 'markup',
+              '#prefix' => '<div class="sweaver-group clearfix"><label>'. $property->description .':</label><div class="sweaver-group-content">',
+              '#suffix' => '</div></div>',
+            );
+        }
+        else {
+          return array(
+            '#theme' => 'table')
+            + $property->property_options;
+        }
+        break;
+        
+      // New Type of Field implemented to improve the interface
+      case 'radio':
+        $return_markup = '';
+        foreach ($property->property_options as $key => $value)
+            $return_markup .= '<div id="button-radio-'.$property->name.'-'.$key.'" name="'. $property->name.'" class="editor_icons form-item-'.$property->name.'" title="'.$property->description . ' : ' . $value.'"></div>';
         return array(
-          '#type' => 'markup',
+          '#markup' => $return_markup,
           '#prefix' => '<div class="sweaver-group clearfix"><label>'. $property->description .':</label><div class="sweaver-group-content">',
           '#suffix' => '</div></div>',
         );
         break;
+        
+    }
+  }
+  
+  private function sweaver_recursive_table_element ($property, $properties)
+  {
+    if (is_array($property))
+    {
+      foreach($property as $kee => $value)
+      {
+        if (is_array($value))
+          $property[$kee] = $this->sweaver_recursive_table_element($value, $properties);
+          
+        elseif (preg_match('/^{([a-zA-Z_-]+)}$/', $value, $property_name)) {
+          // $property_name[0] contains the entire string and $property_name[1] the first variable
+          $property_name = $property_name[1];
+          if (isset($properties[$property_name]))
+            $property[$kee] = $properties[$property_name]; 
+        }
+      }
+      return $property;
     }
   }
 }

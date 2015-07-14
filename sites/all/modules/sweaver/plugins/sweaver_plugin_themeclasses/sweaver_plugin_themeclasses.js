@@ -1,4 +1,3 @@
-/* $Id: sweaver_plugin_themeclasses.js,v 1.1.2.5.2.3 2010/11/06 11:36:02 swentel Exp $ */
 
 (function ($) {
 

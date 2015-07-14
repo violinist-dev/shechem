@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver.drush.inc,v 1.1.4.7 2010/11/06 15:41:40 swentel Exp $
 
 /**
  * @file

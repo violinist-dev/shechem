@@ -1,5 +1,4 @@
 <?php
-// $Id: sweaver.inc,v 1.1.4.3 2010/11/08 17:20:00 swentel Exp $
 
 /**
  * @file
@@ -103,6 +102,18 @@ class Sweaver {
   private function add_plugin(Sweaver_plugin $plugin) {
     $this->plugins[] = $plugin;
   }
+  
+  /**
+   * is_plugin_activated
+   * Check if a plugin is activated
+   * @return true if activated
+   */
+  public function is_plugin_activated($name) {
+    if ($this->plugins[$name]) {
+      return isset($this->plugins_registry_enabled[$name]);
+    }
+    return false;
+  }
 
   /**
    * get_plugin.
@@ -163,15 +174,24 @@ class Sweaver {
       if (sweaver_session(NULL, 'sweaver_temp')) {
         ctools_include('object-cache');
         $css = ctools_object_cache_get('sweaver-styling', 'sweaver-styling');
+        if (!isset($css->style_id)) {
+          $css = new stdClass();
+        }
         $css->type = 'draft';
       }
       elseif (sweaver_session(NULL, 'draft_mode')) {
         $table = (sweaver_session(NULL, 'loaded_table') == 'live') ? 'sweaver_style' : 'sweaver_style_draft';
         $css = db_query("SELECT * FROM {". $table ."} where style_id = :style_id", array(':style_id' => sweaver_session(NULL, 'loaded_style')))->fetchObject();
+        if (!isset($css->style_id)) {
+          $css = new stdClass();
+        }
         $css->type = 'draft';
       }
       else {
         $css = db_query("SELECT style_id, theme, style, css, customcss, palette, themesettings, active FROM {sweaver_style} where theme = :theme and active = 1", array(':theme' => $this->theme))->fetchObject();
+        if (!isset($css->style_id)) {
+          $css = new stdClass();
+        }
         $css->type = 'live';
       }
       if (!isset($css->style_id)) {

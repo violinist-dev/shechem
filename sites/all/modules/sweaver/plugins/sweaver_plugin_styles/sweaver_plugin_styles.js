@@ -1,4 +1,3 @@
-/* $Id: sweaver_plugin_styles.js,v 1.1.4.5 2010/11/05 23:54:07 swentel Exp $ */
 
 /**
  * @file
@@ -23,35 +22,42 @@ $(document).ready(function() {
 });
 
 /**
+ * Always save when leaving the page.
+ */
+$(window).unload(function() {
+  Drupal.Sweaver.AutoSave();
+});
+
+/**
  * Autosave function.
  */
 Drupal.Sweaver.AutoSave = function(context) {
   if (Drupal.Sweaver.changed) {
     Drupal.Sweaver.changed = false;
-	  
+  	
+    var ajax_data = {};
+    
     // Get values for css, customcss & palette (if available)
-    var css = $('[name=sweaver-css]').val();
-    if ($('#edit-sweaver-plugin-custom-css').length) {
-      var customcss = $('#edit-sweaver-plugin-custom-css').val();      
+    if ($('[name=sweaver-css]').length) {
+      ajax_data.css = $('[name=sweaver-css]').val();
     }
-    else {
-      var customcss = '';            
+    if ($('#edit-sweaver-plugin-custom-css').length) {
+      ajax_data.customcss = $('#edit-sweaver-plugin-custom-css').val();      
     }
     if ($('[name=sweaver-plugin-palette]').length) {
-      var palette = $('[name=sweaver-plugin-palette]').val();
+      ajax_data.palette = $('[name=sweaver-plugin-palette]').val();
     }
-    else {
-      var palette = '';
-    }
+    var managed_file_fid = 0;
+    $('#sweaver input[type=hidden][name$="[fid]"]').each(function(){ 
+      if ($(this).val() != 0){
+        ajax_data.managed_file_fid = $(this).val();
+      }
+    });
 
     $.ajax({
       type: "POST",
       url: Drupal.settings.basePath + 'index.php?q=sweaver-autosave',
-      data: {
-        css: css,
-        customcss: customcss,
-        palette: palette        
-      },
+      data: ajax_data,
       dataType: 'json',
       timeout: 5000,
       success: function(data){
