@@ -421,5 +421,5 @@ function wysiwyg_update_7204() {
       ))
       ->execute();
   }
-  //wysiwyg_profile_cache_clear();
+  wysiwyg_profile_cache_clear();
 }
