@@ -1,4 +1,3 @@
-// $Id: markitup.js,v 1.3 2009/09/26 05:37:57 sun Exp $
 (function($) {
 
 /**
@@ -18,12 +17,24 @@ Drupal.wysiwyg.editor.attach.markitup = function(context, params, settings) {
 /**
  * Detach a single or all editors.
  */
-Drupal.wysiwyg.editor.detach.markitup = function(context, params) {
-  if (typeof params != 'undefined') {
-    $('#' + params.field, context).markItUpRemove();
+Drupal.wysiwyg.editor.detach.markitup = function (context, params, trigger) {
+  if (trigger == 'serialize') {
+    return;
   }
-  else {
-    $('.markItUpEditor', context).markItUpRemove();
+  $('#' + params.field, context).markItUpRemove();
+};
+
+Drupal.wysiwyg.editor.instance.markitup = {
+  insert: function (content) {
+    $.markItUp({ replaceWith: content });
+  },
+
+  setContent: function (content) {
+    $('#' + this.field).val(content);
+  },
+
+  getContent: function () {
+    return $('#' + this.field).val();
   }
 };
 

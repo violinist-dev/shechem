@@ -1,8 +1,7 @@
-// $Id: wysiwyg.init.js,v 1.4 2010/11/13 18:53:15 sun Exp $
 
-Drupal.wysiwyg = Drupal.wysiwyg || { 'instances': {} };
+Drupal.wysiwyg = Drupal.wysiwyg || { 'instances': {}, 'excludeIdSelectors': { 'tokens': ['[id^="token-"]'] } };
 
-Drupal.wysiwyg.editor = Drupal.wysiwyg.editor || { 'init': {}, 'attach': {}, 'detach': {}, 'instance': {} };
+Drupal.wysiwyg.editor = Drupal.wysiwyg.editor || { 'init': {}, 'update': {}, 'attach': {}, 'detach': {}, 'instance': {} };
 
 Drupal.wysiwyg.plugins = Drupal.wysiwyg.plugins || {};
 
