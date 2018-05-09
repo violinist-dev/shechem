@@ -1,5 +1,0 @@
-; $Id: ux_elements.info,v 1.2 2010/12/21 15:43:30 jameselliott Exp $
-name = UX Elements
-description = Adds more element types to those provided by Drupal core
-core = 7.x
-files[] = ux_elements.module

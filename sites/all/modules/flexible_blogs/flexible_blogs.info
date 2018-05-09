@@ -1,9 +1,0 @@
-; $Id: flexible_blogs.info,v 1.1 2010/05/12 21:54:22 drothstein Exp $
-name = Flexible blogs
-description = Enhances the Blog module with behavior for site-wide and multi-user blogs.
-dependencies[] = blog
-core = 7.x
-files[] = flexible_blogs.module
-files[] = flexible_blogs.admin.inc
-files[] = flexible_blogs.install
-configure = admin/config/content/blog
