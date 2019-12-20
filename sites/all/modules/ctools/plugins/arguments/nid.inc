@@ -2,8 +2,7 @@
 
 /**
  * @file
- *
- * Plugin to provide an argument handler for a node id
+ * Plugin to provide an argument handler for a node id.
  */
 
 /**
@@ -19,6 +18,7 @@ $plugin = array(
     '#type' => 'textfield',
     '#description' => t('Enter the node ID of a node for this argument'),
   ),
+  'no ui' => TRUE,
 );
 
 /**
@@ -46,4 +46,3 @@ function ctools_argument_nid_context($arg = NULL, $conf = NULL, $empty = FALSE) 
 
   return ctools_context_create('node', $node);
 }
-

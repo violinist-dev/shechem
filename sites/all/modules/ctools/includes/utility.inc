@@ -17,28 +17,15 @@
  * To save time we pass the $items array in so we don't need to do array
  * addition. It modifies the array by reference and doesn't need to return it.
  */
-function _ctools_passthrough(&$items, $type = 'theme') {
-  $files = drupal_system_listing('/\.' . $type . '\.inc$/', drupal_get_path('module', 'ctools') . '/includes', 'name', 0);
+function ctools_passthrough($module, $type, &$items) {
+  $files = file_scan_directory(drupal_get_path('module', $module) . '/includes', '/\.' . $type . '\.inc$/', array('key' => 'name'));
   foreach ($files as $file) {
     require_once DRUPAL_ROOT . '/' . $file->uri;
     list($tool) = explode('.', $file->name, 2);
 
-    $function = 'ctools_' . str_replace ('-', '_', $tool) . '_' . str_replace('-', '_', $type);
+    $function = $module . '_' . str_replace('-', '_', $tool) . '_' . str_replace('-', '_', $type);
     if (function_exists($function)) {
       $function($items);
     }
   }
 }
-
-/**
- * Implementation of hook_theme_registry_alter()
- */
-function ctools_theme_registry_alter(&$registry) {
-  // Move this one last last last so it can catch changes made by modules and themes.
-  $key = array_search('ctools_preprocess_page', $registry['page']['preprocess functions']);
-  if ($key) {
-    unset($registry['page']['preprocess functions'][$key]);
-  }
-  $registry['page']['preprocess functions'][] = 'ctools_preprocess_page';
-}
-

@@ -1,5 +1,9 @@
 <?php
-// $Id: xmlsitemap_i18n.module,v 1.16 2010/08/30 05:34:40 davereid Exp $
+
+/**
+ * @file
+ * Main file for XML sitemap i18n.
+ */
 
 /**
  * Implements hook_xmlsitemap_context_info().
@@ -77,7 +81,7 @@ function xmlsitemap_i18n_query_xmlsitemap_generate_alter(QueryAlterableInterface
 
   // Get languages to simplify query building.
   $current = $sitemap->context['language'];
-  $default = i18n_default_language();
+  $default = language_default();
 
   if ($mode == 'mixed' && $current == $default) {
     // If mode is mixed but current = default, is the same as 'simple'.
@@ -87,29 +91,34 @@ function xmlsitemap_i18n_query_xmlsitemap_generate_alter(QueryAlterableInterface
   switch ($mode) {
     case 'simple':
       // Current language and language neutral.
-      $query->condition('language', array($current, LANGUAGE_NONE));
+      $query->condition('x.language', array($current, LANGUAGE_NONE));
       break;
+
     case 'mixed':
-      // Mixed current language (if available) or default language (if not) and language neutral.
-      $query->condition('language', array($current, $default, LANGUAGE_NONE));
+      // Mixed current language (if available) or default language (if not) and
+      // language neutral.
+      $query->condition('x.language', array($current, $default, LANGUAGE_NONE));
       break;
+
     case 'default':
       // Only default language and language neutral.
-      $query->condition('language', array($default, LANGUAGE_NONE));
+      $query->condition('x.language', array($default, LANGUAGE_NONE));
       break;
+
     case 'strict':
       // Only current language (for nodes), simple for all other types.
       $node_condition = db_and();
-      $node_condition->condition('type', 'node');
-      $node_condition->condition('language', $current);
+      $node_condition->condition('x.type', 'node');
+      $node_condition->condition('x.language', $current);
       $normal_condition = db_and();
-      $normal_condition->condition('type', 'node', '<>');
-      $normal_condition->condition('language', array($current, LANGUAGE_NONE));
+      $normal_condition->condition('x.type', 'node', '<>');
+      $normal_condition->condition('x.language', array($current, LANGUAGE_NONE));
       $condition = db_or();
       $condition->condition($node_condition);
       $condition->condition($normal_condition);
       $query->condition($condition);
       break;
+
     case 'off':
       // All content. No language conditions apply.
       break;

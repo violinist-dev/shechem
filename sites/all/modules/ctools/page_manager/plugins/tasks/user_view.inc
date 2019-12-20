@@ -9,7 +9,7 @@
  */
 function page_manager_user_view_page_manager_tasks() {
   return array(
-    // This is a 'page' task and will fall under the page admin UI
+    // This is a 'page' task and will fall under the page admin UI.
     'task type' => 'page',
     'title' => t('User profile template'),
     'admin title' => t('User profile template'),
@@ -31,6 +31,7 @@ function page_manager_user_view_page_manager_tasks() {
     // Allow this to be enabled or disabled:
     'disabled' => variable_get('page_manager_user_view_disabled', TRUE),
     'enable callback' => 'page_manager_user_view_enable',
+    'access callback' => 'page_manager_user_view_access_check',
   );
 }
 
@@ -52,7 +53,7 @@ function page_manager_user_view_menu_alter(&$items, $task) {
     $items['user/%user']['file'] = $task['file'];
   }
   else {
-    // automatically disable this task if it cannot be enabled.
+    // Automatically disable this task if it cannot be enabled.
     variable_set('page_manager_user_view_disabled', TRUE);
     if (!empty($GLOBALS['page_manager_enabling_user_view'])) {
       drupal_set_message(t('Page manager module is unable to enable user/%user because some other module already has overridden with %callback.', array('%callback' => $items['user/%user']['page callback'])), 'error');
@@ -80,16 +81,27 @@ function page_manager_user_view_page($account) {
   user_build_content($account);
 
   $output = ctools_context_handler_render($task, '', $contexts, array($account->uid));
-  if ($output === FALSE) {
-    // Fall back!
+  if ($output !== FALSE) {
+    return $output;
+  }
+
+  $function = 'user_view';
+  foreach (module_implements('page_manager_override') as $module) {
+    $call = $module . '_page_manager_override';
+    if (($rc = $call('user_view')) && function_exists($rc)) {
+      $function = $rc;
+      break;
+    }
+  }
+
+  // Otherwise, fall back.
+  if ($function == 'user_view') {
     module_load_include('inc', 'user', 'user.pages');
-    $output = user_view($account);
   }
-  else {
-    //fire off "view" op so that triggers still work
-//    user_module_invoke('view', $array = array(), $account);
-  }
-  return $output;
+  // Fire off "view" op so that triggers still work.
+  // @todo -- this doesn't work anymore, and the alternatives seem bad.
+  // will have to figure out how to fix this.
+  return $function($account);
 }
 
 /**
@@ -104,7 +116,7 @@ function page_manager_user_view_get_arguments($task, $subtask_id) {
       'keyword' => 'user',
       'identifier' => t('User being viewed'),
       'id' => 1,
-      'name' => 'uid',
+      'name' => 'entity_id:user',
       'settings' => array(),
     ),
   );
@@ -128,4 +140,22 @@ function page_manager_user_view_enable($cache, $status) {
   if (!$status) {
     $GLOBALS['page_manager_enabling_user_view'] = TRUE;
   }
+}
+
+/**
+ * Callback to determine if a page is accessible.
+ *
+ * @param $task
+ *   The task plugin.
+ * @param $subtask_id
+ *   The subtask id
+ * @param $contexts
+ *   The contexts loaded for the task.
+ *
+ * @return
+ *   TRUE if the current user can access the page.
+ */
+function page_manager_user_view_access_check($task, $subtask_id, $contexts) {
+  $context = reset($contexts);
+  return user_view_access($context->data);
 }

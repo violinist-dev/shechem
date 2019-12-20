@@ -24,8 +24,7 @@
 }
 
 .box-margin {
-  margin-left: 12px;
-  margin-right: 12px;
+  margin: 12px 12px 0 12px;
 }
 
 /* @end */
@@ -40,35 +39,34 @@
 .views-admin .icon,
 .views-admin .icon-text {
   background-attachment: scroll;
-  background-image: url("../images/sprites.png");
+  background-image: url('../images/sprites.png');
   background-position: left top; /* LTR */
   background-repeat: no-repeat;
 }
 
 .views-admin a.icon {
-  background-image:
-    url("../images/sprites.png"),
-    -moz-linear-gradient(
-      -90deg,
-      #ffffff 0px,
-      #e8e8e8 100%);
-  background-image:
-    url("../images/sprites.png"),
-    -webkit-gradient(
-      linear,
-      left top,
-      left bottom,
-      color-stop(0.0, rgba(255, 255, 255, 1.0)),
-      color-stop(1.0, rgba(232, 232, 232, 1.0))
-    );
-  background-image:
-    url("../images/sprites.png"),
-    -webkit-linear-gradient(
-      -90deg,
-      #ffffff 0px,
-      #e8e8e8 100%);
+  background-image: url('../images/sprites.png'),
+  -moz-linear-gradient(
+  -90deg,
+  #fff 0px,
+  #e8e8e8 100%
+  );
+  background-image: url('../images/sprites.png'),
+  -webkit-gradient(
+  linear,
+  left top,
+  left bottom,
+  color-stop(0.0, rgba(255, 255, 255, 1.0)),
+  color-stop(1.0, rgba(232, 232, 232, 1.0))
+  );
+  background-image: url('../images/sprites.png'),
+  -webkit-linear-gradient(
+  -90deg,
+  #fff 0px,
+  #e8e8e8 100%
+  );
   background-repeat: no-repeat, repeat-y;
-  border: 1px solid #dddddd;
+  border: 1px solid #ddd;
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
   border-radius: 4px;
@@ -153,10 +151,6 @@
 
 /* @group Forms */
 
-.views-admin-dependent {
-  padding-left: 17px;
-}
-
 fieldset.box-padding {
   border: none;
 }
@@ -166,9 +160,13 @@ fieldset.box-padding {
 }
 
 .form-item {
-  margin-top: 6px;
+  margin-top: 9px;
   padding-bottom: 0;
   padding-top: 0;
+}
+
+.form-type-checkbox {
+  margin-top: 6px;
 }
 
 input.form-checkbox,
@@ -176,8 +174,8 @@ input.form-radio {
   vertical-align: baseline;
 }
 
-.form-submit + .form-submit,
-.views-admin a.button + a.button {
+.form-submit:not(.js-hide) + .form-submit,
+.views-admin a.button:not(.js-hide) + a.button {
   margin-left: 1em; /* LTR */
 }
 
@@ -191,26 +189,39 @@ input.form-radio {
 }
 
 .views-admin fieldset fieldset.container-inline {
-  margin-top: 6px;
+  margin-bottom: 1em;
+  margin-top: 1em;
   padding-top: 0;
 }
 
+.views-admin fieldset fieldset.container-inline > .fieldset-wrapper {
+  padding-bottom: 0;
+}
+
 /* Indent form elements so they're directly underneath the label of the checkbox that reveals them */
-.views-admin .form-type-checkbox + .form-wrapper,
-.views-admin .form-type-checkbox + .views-ui-ajax-wrapper {
+.views-admin .form-type-checkbox + .form-wrapper {
   margin-left: 16px; /* LTR */
 }
 
-/* Hide 'remove' checkboxes. This might be scoped too widely. */
-[class*="form-type-checkbox"][class*="remove"] {
+/* Hide 'remove' checkboxes. */
+.views-remove-checkbox {
   display: none;
 }
 
 /* sizes the labels of checkboxes and radio button to the height of the text */
-.form-type-checkbox label,
-.form-type-radio label {
+.views-admin .form-type-checkbox label,
+.views-admin .form-type-radio label {
   line-height: 2;
 }
+
+/* @group Dependent options */
+
+.views-admin-dependent .form-item {
+  margin-bottom: 6px;
+  margin-top: 6px;
+}
+
+/* @end */
 
 /* @end */
 
@@ -249,7 +260,7 @@ input.form-radio {
 
 /* @group Tables */
 
-table td, 
+table td,
 table th {
   vertical-align: top;
 }
@@ -368,6 +379,7 @@ td.group-title {
   text-transform: uppercase;
 }
 
+.grouped-description,
 .exposed-description {
   float: left;
   padding-top: 3px;
@@ -393,26 +405,36 @@ td.group-title {
 /* @group Attachments */
 
 .views-displays {
-  border: 1px solid #CCC;
-  margin-bottom: 36px;
+  border: 1px solid #ccc;
   padding-bottom: 36px;
 }
 
 .views-display-top {
-  background-color: #F9F9F9;
-  border-bottom: 1px solid #CCCCCC;
-  margin-bottom: 14px;
-  padding: 8px 8px 6px; /* LTR */
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #ccc;
+  padding: 8px 8px 8px; /* LTR */
   position: relative;
 }
 
-.views-display-top .secondary > li + li {
-  margin-left: 6px;
+.views-display-top .secondary {
+  margin-right: 18em;
+}
+
+.views-display-top .secondary > li {
+  margin-right: 6px;
   padding-left: 0;
+}
+
+.views-display-top .secondary > li:last-child {
+  margin-right: 0;
 }
 
 #views-display-extra-actions li {
   padding: 3px 9px;
+}
+
+.views-display-top #views-display-top {
+  max-width: 180px;
 }
 
 /* @end */
@@ -422,15 +444,33 @@ td.group-title {
  * The tabs that switch between sections
  */
 
+ul#views-display-menu-tabs {
+  margin-right: 200px;
+}
+
+ul#views-display-menu-tabs li {
+  margin-bottom: 5px;
+}
+
+ul#views-display-menu-tabs li.add ul.action-list li {
+  margin: 0;
+}
+
 .views-displays .secondary a {
-  background-color: #f1f1f1;
   border: 1px solid #cbcbcb;
-  -moz-border-radius: 7px;
-  -webkit-border-radius: 7px;
-  border-radius: 7px;
-  color: #008BCB;
   display: inline-block;
-  padding: 2px 7px 3px;
+  font-size: small;
+  line-height: 1.3333;
+  padding: 3px 7px;
+}
+
+/**
+ * Display a red border if the display doesn't validate.
+ */
+.views-displays ul.secondary li.active a.active.error,
+.views-displays .secondary a.error {
+  border: 2px solid #ed541d;
+  padding: 1px 6px;
 }
 
 .views-displays .secondary a:focus {
@@ -439,21 +479,19 @@ td.group-title {
 
 .views-displays .secondary a:hover,
 .views-displays .secondary .active a {
-  background-color: #666666;
-  color: #ffffff;
+  background-color: #666;
+  color: #fff;
+  border-bottom-width: 1px;
 }
 
 .views-displays .secondary .open > a {
-  -moz-border-radius: 7px 7px 0 0;
-  -webkit-border-radius: 7px 7px 0 0;
-  border-radius: 7px 7px 0 0;
+  background-color: #f1f1f1;
   border-bottom: 1px solid transparent;
   position: relative;
 }
 
 .views-displays .secondary .open > a:hover {
   background-color: #f1f1f1;
-  color: #008BCB;
 }
 
 .views-displays .secondary .action-list  li {
@@ -465,9 +503,6 @@ td.group-title {
 }
 
 .views-displays .secondary .action-list  li:first-child {
-  -moz-border-radius: 0 7px 0 0;
-  -webkit-border-radius: 0 7px 0 0;
-  border-radius: 0 7px 0 0;
   border-width: 1px 1px 0;
 }
 
@@ -476,37 +511,25 @@ td.group-title {
 }
 
 .views-displays .secondary .action-list  li:last-child {
-  -moz-border-radius: 0 0 7px 7px;
-  -webkit-border-radius: 0 0 7px 7px;
-  border-radius: 0 0 7px 7px;
   border-width: 0 1px 1px;
 }
 
 .views-displays .secondary .action-list input.form-submit {
   background: none repeat scroll 0 0 transparent;
   border: medium none;
-  -moz-border-radius: 0;
-  -webkit-border-radius: 0;
-  border-radius: 0;
-  color: #008BCB;
+  margin: 0;
   padding: 0;
 }
 
 .views-displays .secondary .action-list li:hover {
-  background-color: #dddddd;
+  background-color: #ddd;
 }
 
 /* @end */
 
 /* @group Attachment details */
- 
-#edit-display-settings {
-  border-bottom: 3px solid #CCC;
-  padding-bottom: 12px;
-}
 
 #edit-display-settings-title {
-  color: #008BCB;
   font-size: 14px;
   line-height: 1.5;
   margin: 0;
@@ -532,43 +555,40 @@ td.group-title {
  */
 
 .views-display-column + .views-display-column {
-   margin-top: 0;
- }
+  margin-top: 0;
+}
 
- /* @end */
+/* @end */
 
 /* @group Auto preview
  *
  * The auto-preview checkbox line.
  */
- 
-#edit-display-preview-controls {
-  margin-top: 36px;
-}
 
-#edit-display-preview-controls > div,
-#edit-display-preview-controls > input {
+#views-ui-preview-form > div > div,
+#views-ui-preview-form > div > input {
   float: left;
 }
 
-#edit-display-preview-controls > .form-type-checkbox {
+#views-ui-preview-form .form-type-checkbox {
   margin-top: 2px;
+  margin-left: 2px;
 }
 
-#edit-display-preview-controls > .form-type-textfield {
+#views-ui-preview-form .form-type-textfield {
   margin-top: 5px;
 }
 
-#edit-display-preview-controls .arguments-preview {
+#views-ui-preview-form .arguments-preview {
   font-size: 1em;
 }
 
-#edit-display-preview-controls .arguments-preview,
-#edit-display-preview-controls .form-type-textfield {
+#views-ui-preview-form .arguments-preview,
+#views-ui-preview-form .form-type-textfield {
   margin-left: 14px;
 }
 
-#edit-display-preview-controls .form-type-textfield label {
+#views-ui-preview-form .form-type-textfield label {
   display: inline-block;
   float: left;
   font-weight: normal;
@@ -576,7 +596,7 @@ td.group-title {
   margin-right: 0.75em;
 }
 
-#edit-display-preview-controls .form-type-textfield .description {
+#views-ui-preview-form .form-type-textfield .description {
   white-space: nowrap;
 }
 
@@ -604,12 +624,17 @@ td.group-title {
 }
 
 .views-ui-display-tab-bucket h3 {
-  font-size: 12px;
-  text-transform: uppercase;
+  font-size: small;
+  margin: 0;
 }
 
-.views-ui-display-tab-bucket .links.actions {
-  margin-top: 2px;
+.views-ui-display-tab-bucket .horizontal.actions {
+  margin-right: 6px;
+}
+
+.views-ui-display-tab-bucket .actions.horizontal li + li {
+  margin-left: 3px;
+  padding-left: 3px;
 }
 
 .views-ui-display-tab-bucket.access {
@@ -628,28 +653,17 @@ td.group-title {
 /* @end */
 
 /* @group Attachment bucket overridden
- * 
- * Applies a broken link icon to overridden buckets.
+ *
+ * Applies a overriden(italics) font style to overridden buckets.
  * The better way to implement this would be to add the overridden class
- * to the bucket header when the bucket is overridden and style it as a 
+ * to the bucket header when the bucket is overridden and style it as a
  * generic icon classed element. For the moment, we'll style the bucket
- * header specifically with the broken link icon.
+ * header specifically with the overriden font style.
  */
- 
+
 .views-ui-display-tab-setting.overridden,
 .views-ui-display-tab-bucket.overridden > h3 {
-  background-attachment: scroll;
-  background-image: url("../images/sprites.png");
-  background-position: left -172px; /* LTR */
-  background-repeat: no-repeat;
-  overflow: hidden;
-  padding-left: 21px;
-  zoom: 1;
-  margin-left: 4px;
-}
-
-.views-ui-display-tab-bucket.overridden .views-display-setting {
-  margin-left: 15px; /* LTR */
+  font-style: italic;
 }
 
 /* @end */
@@ -668,7 +682,7 @@ td.group-title {
  */
 
 .views-ui-display-tab-bucket .views-display-setting {
-  color: #666666;
+  color: #666;
   font-size: 12px;
   padding-bottom: 2px;
 }
@@ -733,32 +747,51 @@ td.group-title {
  */
 
 .views-ui-dialog {
+  font-size: small;
   padding: 0;
 }
 
-.views-ui-dialog fieldset.collapsible {
-  padding-top: 1.5em;
+.views-ui-dialog .ui-dialog-titlebar-close {
+  background: url('../images/close.png') no-repeat scroll 6px 3px #f3f4ee;
+  border-color: #aaa;
+  -moz-border-radius: 0 10px 12px 0;
+  -webkit-border-radius: 0 10px 12px 0;
+  border-radius: 0 10px 12px 0;
+  border-style: solid;
+  border-width: 1px 1px 1px 0;
+  -moz-box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.1);
+  height: 22px;
+  right: -28px;
+  top: 0;
+  width: 26px;
 }
 
-.views-ui-dialog fieldset.collapsed {
-  padding-top: 2.5em;
+.views-ui-dialog .ui-dialog-titlebar-close span {
+  display: none;
 }
 
-div.views-filterable-options .form-type-checkbox {
-  border: 1px solid #CCC;
+.views-filterable-options .form-type-checkbox {
+  border: 1px solid #ccc;
   padding: 5px 8px;
   border-top: none;
 }
 
-div.views-filterable-options {
-  border-top:  1px solid #CCC;
+.views-filterable-options {
+  border-top: 1px solid #ccc;
 }
 
-div.views-filterable-options .even .form-type-checkbox {
-  background-color: #F3F4EE;
+.views-filterable-options .even .form-type-checkbox {
+  background-color: #f3f4ee;
 }
 
-div.views-filterable-options .form-type-checkbox .description {
+.filterable-option .form-item {
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.views-filterable-options .form-type-checkbox .description {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -781,13 +814,22 @@ div.views-filterable-options .form-type-checkbox .description {
   margin-bottom: 10px;
 }
 
-.views-ui-dialog .views-add-form-selected {
-  margin: 5px 16px;
+.views-ui-dialog .views-add-form-selected.container-inline {
+  padding-top: 0;
+}
+
+.views-ui-dialog .views-add-form-selected.container-inline > div {
+  display: block;
+}
+
+.views-ui-dialog #edit-selected {
+  margin: 0;
+  padding: 6px 16px;
 }
 
 .views-ui-dialog #views-ajax-title,
 .views-ui-dialog .views-override {
-  background-color: #F3F4EE;
+  background-color: #f3f4ee;
 }
 
 .views-ui-dialog .views-override {
@@ -819,17 +861,22 @@ div.views-filterable-options .form-type-checkbox .description {
 }
 
 .views-ui-dialog .scroll {
-  border: 1px solid #CCC;
+  border: 1px solid #ccc;
   border-width: 1px 0;
   padding: 8px 13px;
 }
 
+.views-ui-dialog fieldset .item-list {
+  padding-left: 2em;
+}
+
 .views-ui-dialog .form-buttons {
-  background-color: #F3F4EE;
+  background-color: #f3f4ee;
   padding: 8px 13px;
 }
 .views-ui-dialog .form-buttons input {
   margin-bottom: 0;
+  margin-right: 0;
 }
 
 /* @end */
@@ -840,12 +887,13 @@ div.views-filterable-options .form-type-checkbox .description {
 /* @todo Make this a class to be used anywhere there's node types? */
 .form-type-checkboxes #edit-options-value,
 .form-type-checkboxes #edit-options-validate-options-node-types {
-  border-color: #CCCCCC;
+  border-color: #ccc;
   border-style: solid;
   border-width: 1px;
   max-height: 210px;
   overflow: auto;
-  padding: 5px 5px 0;
+  margin-top: 5px;
+  padding: 0 5px;
   width: 190px;
 }
 
@@ -858,36 +906,60 @@ div.views-filterable-options .form-type-checkbox .description {
 }
 
 #views-ui-rearrange-filter-form tr td[rowspan] {
-  border-color: #CDCDCD;
+  border-color: #cdcdcd;
   border-style: solid;
   border-width: 0 1px 1px 1px;
 }
 
 #views-ui-rearrange-filter-form tr[id^="views-row"] {
-  border-right: 1px solid #CDCDCD;
+  border-right: 1px solid #cdcdcd;
 }
 
 #views-ui-rearrange-filter-form tr[id^="views-row"].even td {
-  background-color: #F3F4ED;
+  background-color: #f3f4ed;
 }
 
 #views-ui-rearrange-filter-form .views-group-title {
-  border-top: 1px solid #CDCDCD;
+  border-top: 1px solid #cdcdcd;
 }
 
 #views-ui-rearrange-filter-form .group-empty {
-  border-bottom: 1px solid #CDCDCD;
+  border-bottom: 1px solid #cdcdcd;
+}
+
+/* @end */
+
+/* @group Expose filter form items */
+
+.form-item-options-expose-required,
+.form-item-options-expose-label,
+.form-item-options-expose-description {
+  margin-bottom: 6px;
+  margin-left: 18px;
+  margin-top: 6px;
 }
 
 /* @end */
 
 /* @group Live preview elements */
 
-/**
- * Create a horizontal rule above the live preview area.
- */
+#views-preview-wrapper {
+  border: 1px solid #ccc;
+  border-top: 2px solid #ccc;
+  padding-bottom: 12px;
+  padding-top: 12px;
+}
+
+#views-ui-preview-form {
+  margin: 12px;
+}
+
 #views-live-preview {
   margin: 0 12px;
+}
+
+#views-live-preview .views-query-info {
+  overflow: auto;
 }
 
 /* Intentionally targeting h1 */
@@ -906,7 +978,7 @@ div.views-filterable-options .form-type-checkbox .description {
 }
 
 #views-live-preview .preview-section {
-  border: 1px dashed #DEDEDE;
+  border: 1px dashed #dedede;
   margin: 0 -5px;
   padding: 3px 5px;
 }
@@ -919,6 +991,27 @@ div.views-filterable-options .form-type-checkbox .description {
 #views-live-preview div.views-row + div.views-row {
   margin-top: 36px;
 }
+
+/* @group Query info table */
+
+.views-query-info table {
+  border-collapse: separate;
+  border-color: #ddd;
+  border-spacing: 0;
+  margin: 10px 0;
+}
+
+.views-query-info table tr {
+  background-color: #f9f9f9;
+}
+
+.views-query-info table th,
+.views-query-info table td {
+  color: #666;
+  padding: 4px 10px;
+}
+
+/* @end */
 
 /* @group Grid */
 
@@ -947,18 +1040,10 @@ div.views-filterable-options .form-type-checkbox .description {
   float: left;
 }
 
-#edit-options-exception {
+#edit-options-exception.collapsible {
   float: right;
   width: 250px;
-  margin-top: 0pt;
-}
-
-#edit-options-argument-present .form-item {
-  margin-top: 10px;
-}
-
-#edit-options-exception .form-type-textfield, #edit-options-argument-present .form-type-textfield {
-  margin-top: 0;
+  margin-top: -2px;
 }
 
 /* @end */
@@ -972,7 +1057,7 @@ div.views-filterable-options .form-type-checkbox .description {
 
 .ajax-progress-throbber {
   background-color: #232323;
-  background-image: url("../images/loading-small.gif");
+  background-image: url('../images/loading-small.gif');
   background-position: center center;
   background-repeat: no-repeat;
   -moz-border-radius: 7px;
@@ -982,6 +1067,16 @@ div.views-filterable-options .form-type-checkbox .description {
   opacity: .9;
   padding: 4px;
   width: 24px;
+}
+
+/* @end */
+
+/* @group Drupal
+ *
+ * Overrides to Drupal system CSS
+ */
+div.messages {
+  margin-bottom: 18px;
 }
 
 /* @end */

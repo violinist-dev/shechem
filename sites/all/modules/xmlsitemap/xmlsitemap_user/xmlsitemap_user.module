@@ -1,5 +1,9 @@
 <?php
-// $Id: xmlsitemap_user.module,v 1.24 2011/01/04 21:18:18 davereid Exp $
+
+/**
+ * @file
+ * Default file for XML sitemap user.
+ */
 
 /**
  * Implements hook_entity_info_alter().
@@ -31,14 +35,14 @@ function xmlsitemap_user_xmlsitemap_index_links($limit) {
 /**
  * Process user sitemap links.
  *
- * @param $uids
+ * @param array $uids
  *   An array of user IDs.
  */
 function xmlsitemap_user_xmlsitemap_process_user_links(array $uids) {
   $accounts = user_load_multiple($uids);
   foreach ($accounts as $account) {
     $link = xmlsitemap_user_create_link($account);
-    xmlsitemap_link_save($link);
+    xmlsitemap_link_save($link, array($link['type'] => $account));
   }
 }
 
@@ -52,7 +56,7 @@ function xmlsitemap_user_user_presave(&$edit, $account, $category) {
       $link = $edit['xmlsitemap'] + $link;
       unset($edit['xmlsitemap']);
     }
-    xmlsitemap_link_save($link);
+    xmlsitemap_link_save($link, array($link['type'] => $account));
   }
 }
 
@@ -61,7 +65,7 @@ function xmlsitemap_user_user_presave(&$edit, $account, $category) {
  */
 function xmlsitemap_user_user_insert(&$edit, $account, $category) {
   $link = xmlsitemap_user_create_link($account);
-  xmlsitemap_link_save($link);
+  xmlsitemap_link_save($link, array($link['type'] => $account));
 }
 
 /**
@@ -69,14 +73,26 @@ function xmlsitemap_user_user_insert(&$edit, $account, $category) {
  */
 function xmlsitemap_user_user_update(&$edit, $account, $category) {
   $link = xmlsitemap_user_create_link($account);
-  xmlsitemap_link_save($link);
+  xmlsitemap_link_save($link, array($link['type'] => $account));
 }
 
 /**
- * Implements hook_user_cancel().
+ * Implements hook_user_delete().
  */
-function xmlsitemap_user_user_cancel($edit, $account, $method) {
+function xmlsitemap_user_user_delete($account) {
   xmlsitemap_link_delete('user', $account->uid);
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ */
+function xmlsitemap_user_field_extra_fields() {
+  $extras['user']['user']['form']['xmlsitemap'] = array(
+    'label' => t('XML sitemap'),
+    'description' => t('XML sitemap module element'),
+    'weight' => 30,
+  );
+  return $extras;
 }
 
 /**
@@ -109,7 +125,7 @@ function xmlsitemap_user_form_user_admin_settings_alter(&$form, $form_state) {
  *
  * The link will be saved as $account->xmlsitemap.
  *
- * @param $account
+ * @param object $account
  *   A user object.
  */
 function xmlsitemap_user_create_link(stdClass &$account) {
@@ -137,14 +153,14 @@ function xmlsitemap_user_create_link(stdClass &$account) {
 
   // The following values must always be checked because they are volatile.
   $account->xmlsitemap['loc'] = $uri['path'];
-  $account->xmlsitemap['access'] = $account->uid && $account->status && $account->login && $account->access;
+  $account->xmlsitemap['access'] = $account->uid && $account->status;
   $account->xmlsitemap['language'] = !empty($account->language) ? $account->language : LANGUAGE_NONE;
 
   return $account->xmlsitemap;
 }
 
 /**
- * Implementation of hook_variables().
+ * Implements hook_variables().
  */
 function xmlsitemap_user_variables() {
   $defaults = array();

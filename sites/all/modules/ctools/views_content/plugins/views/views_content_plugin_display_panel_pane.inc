@@ -8,10 +8,11 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
    * If this variable is true, this display counts as a panel pane. We use
    * this variable so that other modules can create alternate pane displays.
    */
-  var $panel_pane_display = TRUE;
-  var $has_pane_conf = NULL;
+  public $panel_pane_display = TRUE;
+  public $has_pane_conf = NULL;
 
-  function option_definition() {
+
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['pane_title'] = array('default' => '', 'translatable' => TRUE);
@@ -34,7 +35,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
         'title_override'  => array('default' => FALSE),
         'exposed_form'    => array('default' => FALSE),
         'fields_override' => array('default' => FALSE),
-       ),
+      ),
     );
 
     $options['argument_input'] = array('default' => array());
@@ -44,11 +45,13 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
     return $options;
   }
 
-  function has_pane_conf() {
+
+  public function has_pane_conf() {
     return isset($this->has_pane_conf);
   }
 
-  function set_pane_conf($conf = array()) {
+
+  public function set_pane_conf($conf = array()) {
     $this->set_option('pane_conf', $conf);
     $this->has_pane_conf = TRUE;
   }
@@ -58,12 +61,16 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
    *
    * This output is returned as an array.
    */
-  function options_summary(&$categories, &$options) {
+  public function options_summary(&$categories, &$options) {
     // It is very important to call the parent function here:
     parent::options_summary($categories, $options);
 
     $categories['panel_pane'] = array(
       'title' => t('Pane settings'),
+      'column' => 'second',
+      'build' => array(
+        '#weight' => -10,
+      ),
     );
 
     $pane_title = $this->get_option('pane_title');
@@ -71,8 +78,8 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
       $pane_title = t('Use view name');
     }
 
-    if (strlen($pane_title) > 16) {
-      $pane_title = substr($pane_title, 0, 16) . '...';
+    if (drupal_strlen($pane_title) > 16) {
+      $pane_title = drupal_substr($pane_title, 0, 16) . '...';
     }
 
     $options['pane_title'] = array(
@@ -86,8 +93,8 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
       $pane_description = t('Use view description');
     }
 
-    if (strlen($pane_description) > 16) {
-      $pane_description = substr($pane_description, 0, 16) . '...';
+    if (drupal_strlen($pane_description) > 16) {
+      $pane_description = drupal_substr($pane_description, 0, 16) . '...';
     }
 
     $options['pane_description'] = array(
@@ -102,8 +109,8 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
       $pane_category = t('View panes');
     }
 
-    if (strlen($pane_category) > 16) {
-      $pane_category = substr($pane_category, 0, 16) . '...';
+    if (drupal_strlen($pane_category) > 16) {
+      $pane_category = drupal_substr($pane_category, 0, 16) . '...';
     }
 
     $options['pane_category'] = array(
@@ -143,7 +150,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
   /**
    * Provide the default form for setting options.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     // It is very important to call the parent function here:
     parent::options_form($form, $form_state);
 
@@ -173,6 +180,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
           '#options' => $options,
         );
         break;
+
       case 'pane_title':
         $form['#title'] .= t('Administrative title');
 
@@ -239,6 +247,9 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
         ctools_include('dependent');
         $form['argument_input']['#tree'] = TRUE;
 
+        $converters = ctools_context_get_all_converters();
+        ksort($converters);
+
         foreach ($argument_input as $id => $argument) {
           $form['argument_input'][$id] = array(
             '#tree' => TRUE,
@@ -261,14 +272,12 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
             '#title' => t('@arg source', array('@arg' => $argument['name'])),
             '#default_value' => $argument['type'],
           );
-
           $form['argument_input'][$id]['context'] = array(
             '#type' => 'select',
             '#title' => t('Required context'),
             '#description' => t('If "From context" is selected, which type of context to use.'),
             '#default_value' => $argument['context'],
-            '#options' => ctools_context_get_all_converters(),
-            '#process' => array('form_process_select', 'ctools_dependent_process'),
+            '#options' => $converters,
             '#dependency' => array($type_id => array('context')),
           );
 
@@ -277,7 +286,6 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
             '#title' => t('Context is optional'),
             '#description' => t('This context need not be present for the pane to function. If you plan to use this, ensure that the argument handler can handle empty values gracefully.'),
             '#default_value' => $argument['context_optional'],
-            '#process' => array('form_process_checkbox', 'ctools_dependent_process'),
             '#dependency' => array($type_id => array('context')),
           );
 
@@ -287,7 +295,6 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
             '#description' => t('If "From panel argument" is selected, which panel argument to use.'),
             '#default_value' => $argument['panel'],
             '#options' => array(0 => t('First'), 1 => t('Second'), 2 => t('Third'), 3 => t('Fourth'), 4 => t('Fifth'), 5 => t('Sixth')),
-            '#process' => array('form_process_select', 'ctools_dependent_process'),
             '#dependency' => array($type_id => array('panel')),
           );
 
@@ -296,7 +303,6 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
             '#title' => t('Fixed argument'),
             '#description' => t('If "Fixed" is selected, what to use as an argument.'),
             '#default_value' => $argument['fixed'],
-            '#process' => array('ctools_dependent_process'),
             '#dependency' => array($type_id => array('fixed')),
           );
 
@@ -305,7 +311,6 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
             '#title' => t('Label'),
             '#description' => t('If this argument is presented to the panels user, what label to apply to it.'),
             '#default_value' => empty($argument['label']) ? $argument['name'] : $argument['label'],
-            '#process' => array('ctools_dependent_process'),
             '#dependency' => array($type_id => array('user')),
           );
         }
@@ -317,7 +322,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
    * Perform any necessary changes to the form values prior to storage.
    * There is no need for this function to actually store the data.
    */
-  function options_submit(&$form, &$form_state) {
+  public function options_submit(&$form, &$form_state) {
     // It is very important to call the parent function here:
     parent::options_submit($form, $form_state);
     switch ($form_state['section']) {
@@ -339,7 +344,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
    * the arguments doesn't cause the argument input field to just
    * break.
    */
-  function get_argument_input() {
+  public function get_argument_input() {
     $arguments = $this->get_option('argument_input');
     $handlers = $this->get_handlers('argument');
 
@@ -367,7 +372,8 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
     return $output;
   }
 
-  function use_more() {
+
+  public function use_more() {
     $allow = $this->get_option('allow');
     if (!$allow['more_link'] || !$this->has_pane_conf()) {
       return parent::use_more();
@@ -376,11 +382,26 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
     return (bool) $conf['more_link'];
   }
 
-  function get_path() {
+
+  public function get_path() {
     if (empty($this->view->override_path)) {
       return parent::get_path();
     }
     return $this->view->override_path;
+  }
+
+
+  public function get_url() {
+    if ($this->get_option('inherit_panels_path')) {
+      return $this->get_path();
+    }
+    return parent::get_url();
+  }
+
+
+  public function uses_exposed_form_in_block() {
+    // We'll always allow the exposed form in a block, regardless of path.
+    return TRUE;
   }
 
   /**
@@ -392,7 +413,7 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
    * returns, exposed filters will not be used nor
    * displayed unless uses_exposed() returns TRUE.
    */
-  function displays_exposed() {
+  public function displays_exposed() {
     $conf = $this->get_option('allow');
     // If this is set, the exposed form is part of pane configuration, not
     // rendered normally.
@@ -400,4 +421,3 @@ class views_content_plugin_display_panel_pane extends views_plugin_display {
   }
 
 }
-

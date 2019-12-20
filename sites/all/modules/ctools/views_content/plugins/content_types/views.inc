@@ -64,22 +64,10 @@ function views_content_views_content_type_content_types($plugin) {
 }
 
 /**
- * Return a single content type.
- */
-function views_content_views_content_type_content_type($subtype, $plugin) {
-  $view = views_get_view($name);
-  if (empty($view)) {
-    return;
-  }
-
-  return _views_content_views_content_type($view);
-}
-
-/**
  * Create the content type info array to give back to ctools for a given display.
  */
 function _views_content_views_content_type($view) {
-  $title = $view->name;
+  $title = $view->get_human_name();
 
   $icon = 'icon_views_page_legacy.png';
 
@@ -136,7 +124,7 @@ function views_content_views_content_type_render($subtype, $conf, $panel_args, $
   if (isset($conf['context']) && is_array($conf['context'])) {
     foreach ($conf['context'] as $count => $context_info) {
       if (!strpos($context_info, '.')) {
-        // old skool: support pre-converter contexts as well.
+        // Old skool: support pre-converter contexts as well.
         $cid = $context_info;
         $converter = '';
       }
@@ -144,8 +132,12 @@ function views_content_views_content_type_render($subtype, $conf, $panel_args, $
         list($cid, $converter) = explode('.', $context_info, 2);
       }
       if (!empty($contexts[$cid])) {
-        $arg = ctools_context_convert_context($contexts[$cid], $converter);
+        $arg = ctools_context_convert_context($contexts[$cid], $converter, array('sanitize' => FALSE));
         array_splice($args, $count, 0, array($arg));
+      }
+      else {
+        // Make sure we put an argument in even if it was not there.
+        $arg = NULL;
       }
     }
   }
@@ -158,7 +150,7 @@ function views_content_views_content_type_render($subtype, $conf, $panel_args, $
 
   $block = new stdClass();
   $block->module = 'views';
-  $block->delta  = $view->name .'-'.  $view->current_display;
+  $block->delta = $view->name . '-' . $view->current_display;
 
   if (!empty($conf['link_to_view'])) {
     $block->title_link = $view->get_url();
@@ -173,7 +165,7 @@ function views_content_views_content_type_render($subtype, $conf, $panel_args, $
   // pager type that Views uses.
   if ($conf['override_pager_settings']) {
     if (method_exists($view, 'init_pager')) {
-      // Views 3 version
+      // Views 3 version.
       $view->set_items_per_page($conf['nodes_per_page']);
       $view->set_offset($conf['offset']);
 
@@ -237,7 +229,7 @@ function views_content_views_select_display($form, &$form_state) {
   foreach ($view->display as $id => $display) {
     // Content pane views should never be used this way.
     if ($display->display_plugin != 'panel_pane') {
-      $displays[$id] = $display->display_title;
+      $displays[$id] = views_content_get_display_label($view, $id);
     }
   }
 
@@ -245,7 +237,7 @@ function views_content_views_select_display($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Display'),
     '#options' => $displays,
-    '#description' => t('Choose which display of this view you wish to use.')
+    '#description' => t('Choose which display of this view you wish to use.'),
   );
 
   return $form;
@@ -272,14 +264,13 @@ function views_content_views_content_type_edit_form($form, &$form_state) {
     return;
   }
 
-  $form_state['title'] = t('Configure view @view (@display)', array('@view' => $view->name, '@display' => $view->display[$conf['display']]->display_title));
+  $form_state['title'] = t('Configure view @view (@display)', array('@view' => $view->get_human_name(), '@display' => views_content_get_display_label($view, $view->current_display)));
 
   // @todo
   // If using the older format, just a context is listed. We should go through
   // and check for that and forcibly set them to the right converter so that
   // it doesn't get changed to some whacky default. Oooor just let it get changed
   // to 'no context', I suppose.
-
   $required = array();
   if (isset($view->display_handler) && $arguments = $view->display_handler->get_handlers('argument')) {
     foreach ($arguments as $arg) {
@@ -335,7 +326,6 @@ function views_content_views_content_type_edit_form($form, &$form_state) {
     '#title' => t('Use pager'),
     '#default_value' => $conf['use_pager'],
     '#id' => 'use-pager-checkbox',
-    '#process' => array('ctools_dependent_process'),
     '#dependency' => array('override-pager-checkbox' => array(1)),
   );
   $form['pager_settings']['pager_id'] = array(
@@ -344,7 +334,6 @@ function views_content_views_content_type_edit_form($form, &$form_state) {
     '#title' => t('Pager ID'),
     '#size' => 4,
     '#id' => 'use-pager-textfield',
-    '#process' => array('ctools_dependent_process'),
     '#dependency' => array('override-pager-checkbox' => array(1), 'use-pager-checkbox' => array(1)),
     '#dependency_count' => 2,
     '#suffix' => '</div>',
@@ -355,7 +344,6 @@ function views_content_views_content_type_edit_form($form, &$form_state) {
     '#default_value' => $conf['nodes_per_page'],
     '#size' => 4,
     '#title' => t('Num posts'),
-    '#process' => array('ctools_dependent_process'),
     '#dependency' => array('override-pager-checkbox' => array(1)),
   );
 
@@ -365,7 +353,6 @@ function views_content_views_content_type_edit_form($form, &$form_state) {
     '#title' => t('Offset'),
     '#size' => 4,
     '#description' => t('The number of items to skip and not display.'),
-    '#process' => array('ctools_dependent_process'),
     '#dependency' => array('override-pager-checkbox' => array(1)),
   );
 
@@ -416,8 +403,8 @@ function views_content_views_content_type_admin_title($subtype, $conf) {
     return t('Deleted/missing view @view', array('@view' => $view));
   }
 
-  $title = $view->display[$view->current_display]->display_title;
-  return t('View: @name', array('@name' => $view->name . '-' . $title));
+  $title = views_content_get_display_label($view, $view->current_display);
+  return t('View: @name', array('@name' => $view->get_human_name() . ': ' . $title));
 }
 
 /**
@@ -431,10 +418,12 @@ function views_content_views_content_type_admin_info($subtype, $conf, $contexts)
   }
 
   $display = empty($conf['display']) ? $view->current_display : $conf['display'];
+  $block = new stdClass();
+
   $block->title = t('View information');
 
   $block->content = '<ul>';
-  $block->content .= '<li>' . t('Using display @display.', array('@display' => $view->display[$display]->display_title)) . '</li>';
+  $block->content .= '<li>' . t('Using display @display.', array('@display' => views_content_get_display_label($view, $display))) . '</li>';
 
   if (!empty($conf['context']) && $arguments = $view->display_handler->get_handlers('argument')) {
     $argument = reset($arguments);
@@ -444,7 +433,7 @@ function views_content_views_content_type_admin_info($subtype, $conf, $contexts)
       }
 
       if (!strpos($context_info, '.')) {
-        // old skool: support pre-converter contexts as well.
+        // Old skool: support pre-converter contexts as well.
         $cid = $context_info;
         $converter = '';
       }
@@ -456,8 +445,10 @@ function views_content_views_content_type_admin_info($subtype, $conf, $contexts)
         $converters = ctools_context_get_converters($cid . '.', $contexts[$cid]);
         $converter = !empty($converters[$context_info]) ? $converters[$context_info] : t('Default');
         $block->content .= '<li>' . t('Argument @arg using context @context converted into @converter', array(
-          '@arg' => $argument->ui_name(), '@context' => $contexts[$cid]->get_identifier(),
-          '@converter' => $converter)) . '</li>';
+          '@arg' => $argument->ui_name(),
+          '@context' => $contexts[$cid]->get_identifier(),
+          '@converter' => $converter,
+        )) . '</li>';
       }
       $argument = next($arguments);
     }
@@ -504,6 +495,7 @@ function views_content_views_content_type_admin_info($subtype, $conf, $contexts)
  *   versions it was the view name with a dash and the display ID.
  *   If this is the case, we can use it to correct the 'display' setting
  *   in the $conf.
+ *
  * @return
  *   The $view with the initialized display. If the $view could not be
  *   loaded, the name attempted will be loaded for use in errors.
@@ -544,7 +536,6 @@ function _views_content_views_update_conf(&$conf, $subtype) {
 
   $view->set_display($display);
   // $view->current_display will now reflect this value.
-
   // If set NOT to override, go ahead and refresh from the view.
   if (empty($conf['override_pager_settings'])) {
     if (method_exists($view, 'init_pager')) {

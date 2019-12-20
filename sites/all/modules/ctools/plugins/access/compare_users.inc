@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Ctools access plugin to provide access/visiblity if two user contexts are equal.
+ * CTools access plugin to provide access/visiblity if two user contexts are equal.
  */
 
 /**
@@ -20,18 +20,18 @@ $plugin = array(
   'summary' => 'ctools_compare_users_ctools_access_summary',
   'required context' => array(
     new ctools_context_required(t('First User'), 'user'),
-    new ctools_context_required(t("Second User"), 'user')
+    new ctools_context_required(t("Second User"), 'user'),
   ),
 );
 
 /**
- * Settings form for the 'by perm' access plugin
+ * Settings form for the 'by perm' access plugin.
  */
 function ctools_compare_users_settings($form, &$form_state, $conf) {
 
   $form['settings']['helptext'] = array(
     '#type' => 'markup',
-    '#value' => '<div>'. t('Grant access based on comparison of the two user contexts. For example, to grant access to a user to view their own profile, choose "logged in user" and "user being viewed" and say "grant access if equal". When they\'re the same, access will be granted.') . '</div>',
+    '#value' => '<div>' . t('Grant access based on comparison of the two user contexts. For example, to grant access to a user to view their own profile, choose "logged in user" and "user being viewed" and say "grant access if equal". When they\'re the same, access will be granted.') . '</div>',
   );
 
   $form['settings']['equality'] = array(

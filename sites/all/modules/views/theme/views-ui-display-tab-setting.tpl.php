@@ -1,11 +1,11 @@
 <?php
-// $Id$
+
 /**
- * @file views-ui-display-tab-setting.tpl.php
+ * @file
  * Template for each row inside the "boxes" on the display query edit screen.
  */
 ?>
-<div class="views-display-setting <?php print $classes; ?> <?php print $zebra; ?> clearfix">
+<div class="views-display-setting <?php print $classes; ?> <?php print $zebra; ?> clearfix" <?php print $attributes; ?>>
   <?php if ($description): ?>
     <span class="label"><?php print $description; ?></span>
   <?php endif; ?>

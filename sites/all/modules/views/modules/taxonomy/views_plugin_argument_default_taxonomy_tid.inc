@@ -1,11 +1,19 @@
 <?php
+
 /**
  * @file
- *   Taxonomy tid default argument.
+ * Definition of views_plugin_argument_default_taxonomy_tid.
  */
 
+/**
+ * Taxonomy tid default argument.
+ */
 class views_plugin_argument_default_taxonomy_tid extends views_plugin_argument_default {
-  function init(&$view, &$argument, &$options) {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function init(&$view, &$argument, $options) {
     parent::init($view, $argument, $options);
 
     // Convert legacy vids option to machine name vocabularies.
@@ -19,18 +27,25 @@ class views_plugin_argument_default_taxonomy_tid extends views_plugin_argument_d
     }
   }
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
-    $options['term_page'] = array('default' => TRUE);
-    $options['node'] = array('default' => FALSE);
-    $options['limit'] = array('default' => FALSE);
+    $options['term_page'] = array('default' => TRUE, 'bool' => TRUE);
+    $options['node'] = array('default' => FALSE, 'bool' => TRUE);
+    $options['anyall'] = array('default' => ',');
+    $options['limit'] = array('default' => FALSE, 'bool' => TRUE);
     $options['vocabularies'] = array('default' => array());
 
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     $form['term_page'] = array(
       '#type' => 'checkbox',
       '#title' => t('Load default filter from term page'),
@@ -38,7 +53,7 @@ class views_plugin_argument_default_taxonomy_tid extends views_plugin_argument_d
     );
     $form['node'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Load default filter from node page, that\'s good for related taxonomy blocks.'),
+      '#title' => t('Load default filter from node page, that\'s good for related taxonomy blocks'),
       '#default_value' => $this->options['node'],
     );
 
@@ -71,14 +86,34 @@ class views_plugin_argument_default_taxonomy_tid extends views_plugin_argument_d
         'edit-options-argument-default-taxonomy-tid-node' => array(1),
       ),
     );
+
+    $form['anyall'] = array(
+      '#type' => 'radios',
+      '#title' => t('Multiple-value handling'),
+      '#default_value'=> $this->options['anyall'],
+      '#process' => array('form_process_radios', 'ctools_dependent_process'),
+      '#options' => array(
+        ',' => t('Filter to items that share all terms'),
+        '+' => t('Filter to items that share any term'),
+      ),
+      '#dependency' => array(
+        'edit-options-argument-default-taxonomy-tid-node' => array(1),
+      ),
+    );
   }
 
-  function options_submit(&$form, &$form_state, &$options) {
-    // Clear checkbox values.
+  /**
+   * {@inheritdoc}
+   */
+  public function options_submit(&$form, &$form_state, &$options = array()) {
+    // Filter unselected items so we don't unnecessarily store giant arrays.
     $options['vocabularies'] = array_filter($options['vocabularies']);
   }
 
-  function get_argument() {
+  /**
+   * {@inheritdoc}
+   */
+  public function get_argument() {
     // Load default argument from taxonomy page.
     if (!empty($this->options['term_page'])) {
       if (arg(0) == 'taxonomy' && arg(1) == 'term' && is_numeric(arg(2))) {
@@ -116,14 +151,21 @@ class views_plugin_argument_default_taxonomy_tid extends views_plugin_argument_d
               $tids[] = $tid;
             }
           }
-          return implode(",", $tids);
+          return implode($this->options['anyall'], $tids);
         }
         // Return all tids.
         else {
-          return implode(",", array_keys($taxonomy));
+          return implode($this->options['anyall'], array_keys($taxonomy));
         }
       }
     }
-  }
-}
 
+    // If the current page is a view that takes tid as an argument,
+    // find the tid argument and return it.
+    $views_page = views_get_page_view();
+    if ($views_page && isset($views_page->argument['tid'])) {
+      return $views_page->argument['tid']->argument;
+    }
+  }
+
+}

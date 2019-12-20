@@ -1,20 +1,37 @@
 <?php
+
+/**
+ * @file
+ * Definition of views_handler_field_comment_link_delete.
+ */
+
 /**
  * Field handler to present a link to delete a node.
+ *
+ * @ingroup views_field_handlers
  */
 class views_handler_field_comment_link_delete extends views_handler_field_comment_link {
-  function access() {
-    //needs permission to administer comments in general
+
+  /**
+   * {@inheritdoc}
+   */
+  public function access() {
+    // Needs permission to administer comments in general.
     return user_access('administer comments');
   }
 
-  function render_link($data, $values) {
+  /**
+   * {@inheritdoc}
+   */
+  public function render_link($data, $values) {
     $text = !empty($this->options['text']) ? $this->options['text'] : t('delete');
+    $cid = $this->get_value($values, 'cid');
 
     $this->options['alter']['make_link'] = TRUE;
-    $this->options['alter']['path'] = "comment/delete/" . $values->{$this->aliases['cid']};
+    $this->options['alter']['path'] = "comment/" . $cid . "/delete";
     $this->options['alter']['query'] = drupal_get_destination();
 
     return $text;
   }
+
 }

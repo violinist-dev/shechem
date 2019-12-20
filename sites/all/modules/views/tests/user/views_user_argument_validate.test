@@ -1,13 +1,14 @@
 <?php
-// $Id
+
 /**
  * @file
- * Tests views user argument argument handler.
+ * Definition of ViewsUserArgumentValidate.
  */
 
-module_load_include('test', 'views', 'tests/views_query');
-
-class viewsUserArgumentValidate extends viewsSqlTest {
+/**
+ * Tests views user argument argument handler.
+ */
+class ViewsUserArgumentValidate extends ViewsSqlTest {
   public static function getInfo() {
     return array(
       'name' => 'Tests user argument validator',
@@ -23,7 +24,7 @@ class viewsUserArgumentValidate extends viewsSqlTest {
 
   function testArgumentValidateUserUid() {
     $account = $this->account;
-    // test 'uid' case
+    // test 'uid' case.
     $view = $this->view_argument_validate_user('uid');
     $view->set_display('default');
     $view->pre_execute();
@@ -35,13 +36,13 @@ class viewsUserArgumentValidate extends viewsSqlTest {
     $this->assertFalse($view->argument['null']->validate_arg($account->name));
     // Reset safed argument validation.
     $view->argument['null']->argument_validated = NULL;
-    // Fail for a valid numeric, but for a user that doesn't exist
+    // Fail for a valid numeric, but for a user that doesn't exist.
     $this->assertFalse($view->argument['null']->validate_arg(32));
   }
 
   function testArgumentValidateUserName() {
     $account = $this->account;
-    // test 'name' case
+    // test 'name' case.
     $view = $this->view_argument_validate_user('name');
     $view->set_display('default');
     $view->pre_execute();
@@ -53,13 +54,13 @@ class viewsUserArgumentValidate extends viewsSqlTest {
     $this->assertFalse($view->argument['null']->validate_arg($account->uid));
     // Reset safed argument validation.
     $view->argument['null']->argument_validated = NULL;
-    // Fail for a valid string, but for a user that doesn't exist
+    // Fail for a valid string, but for a user that doesn't exist.
     $this->assertFalse($view->argument['null']->validate_arg($this->randomName()));
   }
 
   function testArgumentValidateUserEither() {
     $account = $this->account;
-    // test 'either' case
+    // test 'either' case.
     $view = $this->view_argument_validate_user('either');
     $view->set_display('default');
     $view->pre_execute();
@@ -71,16 +72,16 @@ class viewsUserArgumentValidate extends viewsSqlTest {
     $this->assertTrue($view->argument['null']->validate_arg($account->uid));
     // Reset safed argument validation.
     $view->argument['null']->argument_validated = NULL;
-    // Fail for a valid string, but for a user that doesn't exist
+    // Fail for a valid string, but for a user that doesn't exist.
     $this->assertFalse($view->argument['null']->validate_arg($this->randomName()));
     // Reset safed argument validation.
     $view->argument['null']->argument_validated = NULL;
-    // Fail for a valid uid, but for a user that doesn't exist
+    // Fail for a valid uid, but for a user that doesn't exist.
     $this->assertFalse($view->argument['null']->validate_arg(32));
   }
 
   function view_argument_validate_user($argtype) {
-    $view = new view;
+    $view = new view();
     $view->name = 'view_argument_validate_user';
     $view->description = '';
     $view->tag = '';

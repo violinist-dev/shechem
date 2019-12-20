@@ -1,21 +1,37 @@
 <?php
-// $Id$
+
+/**
+ * @file
+ * Tests Views UI Wizard.
+ */
 
 /**
  * Views UI wizard tests.
  */
 class ViewsUIWizardHelper extends DrupalWebTestCase {
+
+  /**
+   *
+   */
   function setUp() {
     // Enable views_ui.
     parent::setUp('views_ui');
 
     // Create and log in a user with administer views permission.
-    $views_admin = $this->drupalCreateUser(array('administer views', 'administer blocks', 'bypass node access'));
+    $views_admin = $this->drupalCreateUser(array('administer views', 'administer blocks', 'bypass node access', 'access user profiles', 'view revisions'));
     $this->drupalLogin($views_admin);
   }
+
 }
 
+/**
+ * Tests creating views with the wizard and viewing them on the listing page.
+ */
 class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI wizard basic functionality',
@@ -24,6 +40,9 @@ class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
     );
   }
 
+  /**
+   *
+   */
   function testViewsWizardAndListing() {
     // Check if we can access the main views admin page.
     $this->drupalGet('admin/structure/views');
@@ -39,13 +58,13 @@ class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
     $this->assertText(t('Your view was saved. You may edit it from the list below.'));
     $this->assertText($view1['human_name']);
     $this->assertText($view1['description']);
-    foreach(array('delete', 'clone', 'edit') as $operation) {
+    foreach (array('delete', 'clone', 'edit') as $operation) {
       $this->assertLinkByHref(url('admin/structure/views/view/' . $view1['name'] . '/' . $operation));
     }
 
     // This view should not have a block.
     $this->drupalGet('admin/structure/block');
-    $this->assertNoText($view1['name'] . ': Block');
+    $this->assertNoText('View: ' . $view1['human_name']);
 
     // Create two nodes.
     $node1 = $this->drupalCreateNode(array('type' => 'page'));
@@ -89,7 +108,7 @@ class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
 
     // This view should not have a block.
     $this->drupalGet('admin/structure/block');
-    $this->assertNoText($view2['name'] . ': Block');
+    $this->assertNoText('View: ' . $view2['human_name']);
 
     // Create a view with a page and a block, and filter the listing.
     $view3 = array();
@@ -119,7 +138,7 @@ class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
 
     // Put the block into the first sidebar region.
     $this->drupalGet('admin/structure/block');
-    $this->assertText($view3['name'] . ': Block');
+    $this->assertText('View: ' . $view3['human_name']);
     $edit = array();
     $edit["blocks[views_{$view3['name']}-block][region]"] = 'sidebar_first';
     $this->drupalPost('admin/structure/block', $edit, t('Save blocks'));
@@ -132,16 +151,24 @@ class ViewsUIWizardBasicTestCase extends ViewsUIWizardHelper {
 
     // Check if the export screen works.
     $this->drupalGet('admin/structure/views/view/' . $view3['name'] . '/export');
-    $this->assertRaw('$view = new view;');
+    $this->assertRaw('$view = new view();');
     $this->assertRaw($view3['human_name']);
     $this->assertRaw($view3['description']);
 
     // Make sure the listing page doesn't show disabled default views.
     $this->assertNoText('tracker', t('Default tracker view does not show on the listing page.'));
   }
+
 }
 
+/**
+ * Tests enabling, disabling, and reverting default views via the listing page.
+ */
 class ViewsUIWizardDefaultViewsTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI default views functionality',
@@ -151,17 +178,16 @@ class ViewsUIWizardDefaultViewsTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test default views.
+   * Tests default views.
    */
   function testDefaultViews() {
     // Make sure the front page view starts off as disabled (does not appear on
     // the listing page).
     $edit_href = 'admin/structure/views/view/frontpage/edit';
     $this->drupalGet('admin/structure/views');
-    // TODO: Disabled default views do now appear on the front page. Test this
+    // @todo Disabled default views do now appear on the front page. Test this
     // behavior with templates instead.
     // $this->assertNoLinkByHref($edit_href);
-
     // Enable the front page view, and make sure it is now visible on the main
     // listing page.
     $this->drupalGet('admin/structure/views/templates');
@@ -195,7 +221,7 @@ class ViewsUIWizardDefaultViewsTestCase extends ViewsUIWizardHelper {
     // Now disable the view, and make sure it stops appearing on the main view
     // listing page but instead goes back to displaying on the disabled views
     // listing page.
-    // TODO: Test this behavior with templates instead.
+    // @todo Test this behavior with templates instead.
     $this->drupalGet('admin/structure/views');
     $this->clickViewsOperationLink(t('Disable'), '/frontpage/');
     // $this->assertUrl('admin/structure/views');
@@ -215,15 +241,15 @@ class ViewsUIWizardDefaultViewsTestCase extends ViewsUIWizardHelper {
    * various views listing pages, and they might have tokens in them. So we
    * need special code to find the correct one to click.
    *
-   * @param $label
+   * @param string $label
    *   Text between the anchor tags of the desired link.
-   * @param $unique_href_part
+   * @param string $unique_href_part
    *   A unique string that is expected to occur within the href of the desired
    *   link. For example, if the link URL is expected to look like
    *   "admin/structure/views/view/frontpage/...", then "/frontpage/" could be
    *   passed as the expected unique string.
    *
-   * @return
+   * @return string
    *   The page content that results from clicking on the link, or FALSE on
    *   failure. Failure also results in a failed assertion.
    */
@@ -244,15 +270,42 @@ class ViewsUIWizardDefaultViewsTestCase extends ViewsUIWizardHelper {
       return FALSE;
     }
   }
+
 }
 
+/**
+ * Tests the ability of the views wizard to create views filtered by taxonomy.
+ */
 class ViewsUIWizardTaggedWithTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   protected $node_type_with_tags;
+
+  /**
+   *
+   */
   protected $node_type_without_tags;
+
+  /**
+   *
+   */
   protected $tag_vocabulary;
+
+  /**
+   *
+   */
   protected $tag_field;
+
+  /**
+   *
+   */
   protected $tag_instance;
 
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI wizard taxonomy functionality',
@@ -261,6 +314,9 @@ class ViewsUIWizardTaggedWithTestCase extends ViewsUIWizardHelper {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   function setUp() {
     parent::setUp();
 
@@ -315,7 +371,7 @@ class ViewsUIWizardTaggedWithTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test the "tagged with" functionality.
+   * Tests the "tagged with" functionality.
    */
   function testTaggedWith() {
     // In this test we will only create nodes that have an instance of the tag
@@ -379,7 +435,7 @@ class ViewsUIWizardTaggedWithTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test that the "tagged with" form element only shows for node types that support it.
+   * Test the "tagged with" form element only shows for node types that support it.
    */
   function testTaggedWithByNodeType() {
     // The tagging field is associated with one of our node types only. So the
@@ -409,9 +465,17 @@ class ViewsUIWizardTaggedWithTestCase extends ViewsUIWizardHelper {
     $this->drupalPost(NULL, $view, t('Update "of type" choice'));
     $this->assertFieldByXpath($tags_xpath);
   }
+
 }
 
+/**
+ * Tests the ability of the views wizard to create views with sorts.
+ */
 class ViewsUIWizardSortingTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI wizard sorting functionality',
@@ -421,7 +485,7 @@ class ViewsUIWizardSortingTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test the sorting functionality.
+   * Tests the sorting functionality.
    */
   function testSorting() {
     // Create nodes, each with a different creation time so that we can do a
@@ -476,9 +540,17 @@ class ViewsUIWizardSortingTestCase extends ViewsUIWizardHelper {
     $pos1 = strpos($content, $node1->title);
     $this->assertTrue($pos3 < $pos2 && $pos2 < $pos1, t('The nodes appear in the expected order in a view that sorts by newest first.'));
   }
+
 }
 
+/**
+ * Tests the ability of the wizard to specify the number of items per page.
+ */
 class ViewsUIWizardItemsPerPageTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI wizard items per page functionality',
@@ -488,7 +560,7 @@ class ViewsUIWizardItemsPerPageTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test the number of items per page.
+   * Tests the number of items per page.
    */
   function testItemsPerPage() {
     // Create articles, each with a different creation time so that we can do a
@@ -541,7 +613,7 @@ class ViewsUIWizardItemsPerPageTestCase extends ViewsUIWizardHelper {
     // the block, and check that the nodes we expect appear in the correct
     // order.
     $this->drupalGet('admin/structure/block');
-    $this->assertText($view['name'] . ': Block');
+    $this->assertText('View: ' . $view['human_name']);
     $edit = array();
     $edit["blocks[views_{$view['name']}-block][region]"] = 'sidebar_first';
     $this->drupalPost('admin/structure/block', $edit, t('Save blocks'));
@@ -558,9 +630,17 @@ class ViewsUIWizardItemsPerPageTestCase extends ViewsUIWizardHelper {
     $pos3 = strpos($content, $node3->title);
     $this->assertTrue($pos5 < $pos4 && $pos4 < $pos3, t('The nodes appear in the expected order in the block display.'));
   }
+
 }
 
+/**
+ * Tests the ability of the views wizard to put views in a menu.
+ */
 class ViewsUIWizardMenuTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI wizard menu functionality',
@@ -570,7 +650,7 @@ class ViewsUIWizardMenuTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test the menu functionality.
+   * Tests the menu functionality.
    */
   function testMenus() {
     // Create a view with a page display and a menu link in the Main Menu.
@@ -603,9 +683,182 @@ class ViewsUIWizardMenuTestCase extends ViewsUIWizardHelper {
     }
     $this->assertTrue($found, t('Found a link to %path in the main menu', array('%path' => $view['page[path]'])));
   }
+
 }
 
+/**
+ * Tests the ability of the  wizard to create views with a jump menu style.
+ */
+class ViewsUIWizardJumpMenuTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Views UI wizard jump menu functionality',
+      'description' => 'Test the ability of the views wizard to create views with a jump menu style plugin.',
+      'group' => 'Views UI',
+    );
+  }
+
+  /**
+   * Tests the jump menu style plugin.
+   */
+  function testJumpMenus() {
+    // We'll run this test for several different base tables that appear in the
+    // wizard.
+    $base_table_methods = array(
+      'node' => 'createNodeAndGetPath',
+      'users' => 'createUserAndGetPath',
+      'comment' => 'createCommentAndGetPath',
+      'taxonomy_term' => 'createTaxonomyTermAndGetPath',
+      'file_managed' => 'createFileAndGetPath',
+      'node_revision' => 'createNodeRevisionAndGetPath',
+    );
+
+    foreach ($base_table_methods as $base_table => $method) {
+      // For each base table, find the path that we expect the jump menu to
+      // redirect us to.
+      $path_info = $this->{$method}();
+      if (is_array($path_info)) {
+        $path = $path_info['path'];
+        $options = isset($path_info['options']) ? $path_info['options'] : array();
+      }
+      else {
+        $path = $path_info;
+        $options = array();
+      }
+
+      // Create a page view for the specified base table that uses the jump
+      // menu style plugin.
+      $view = array();
+      $view['human_name'] = $this->randomName(16);
+      $view['name'] = strtolower($this->randomName(16));
+      $view['description'] = $this->randomName(16);
+      $view['show[wizard_key]'] = $base_table;
+      $view['page[create]'] = 1;
+      $view['page[title]'] = $this->randomName(16);
+      $view['page[path]'] = $this->randomName(16);
+      $view['page[style][style_plugin]'] = 'jump_menu';
+      $view['page[style][row_plugin]'] = 'fields';
+      $this->drupalPost('admin/structure/views/add', $view, t('Save & exit'));
+
+      // Submit the jump menu form, and check that we are redirected to the
+      // expected URL.
+      $edit = array();
+      $edit['jump'] = url($path, $options);
+
+      // The urls are built with :: to be able to have a unique path all the time,
+      // so try to find out the real path of $edit.
+      $view_object = views_get_view($view['name']);
+      $view_object->preview('page');
+      $form = $view_object->style_plugin->render();
+      $jump_options = $form['jump']['#options'];
+      foreach ($jump_options as $key => $title) {
+        if (strpos($key, $edit['jump']) !== FALSE) {
+          $edit['jump'] = $key;
+        }
+      }
+
+      $this->drupalPost($view['page[path]'], $edit, t('Go'));
+      $this->assertResponse(200);
+      $this->assertUrl($path, $options);
+    }
+  }
+
+  /**
+   * Helper function to create a node and return its expected path.
+   */
+  function createNodeAndGetPath() {
+    $node = $this->drupalCreateNode();
+    return entity_uri('node', $node);
+  }
+
+  /**
+   * Helper function to create a user and return its expected path.
+   */
+  function createUserAndGetPath() {
+    $account = $this->drupalCreateUser();
+    return entity_uri('user', $account);
+  }
+
+  /**
+   * Helper function to create a comment and return its expected path.
+   */
+  function createCommentAndGetPath() {
+    $node = $this->drupalCreateNode();
+    $comment = (object) array(
+      'cid' => NULL,
+      'nid' => $node->nid,
+      'pid' => 0,
+      'uid' => 0,
+      'status' => COMMENT_PUBLISHED,
+      'subject' => $this->randomName(),
+      'language' => LANGUAGE_NONE,
+      'comment_body' => array(LANGUAGE_NONE => array($this->randomName())),
+    );
+    comment_save($comment);
+    return entity_uri('comment', $comment);
+  }
+
+  /**
+   * Helper function to create a taxonomy term and return its expected path.
+   */
+  function createTaxonomyTermAndGetPath() {
+    $vocabulary = new stdClass();
+    $vocabulary->name = $this->randomName();
+    $vocabulary->machine_name = drupal_strtolower($this->randomName());
+    taxonomy_vocabulary_save($vocabulary);
+
+    $term = new stdClass();
+    $term->name = $this->randomName();
+    $term->vid = $vocabulary->vid;
+    taxonomy_term_save($term);
+
+    return entity_uri('taxonomy_term', $term);
+  }
+
+  /**
+   * Helper function to create a file and return its expected path.
+   */
+  function createFileAndGetPath() {
+    $file = (object) array(
+      'uid' => 1,
+      'filename' => 'views-ui-jump-menu-test.txt',
+      'uri' => 'public://views-ui-jump-menu-test.txt',
+      'filemime' => 'text/plain',
+      'timestamp' => 1,
+      'status' => FILE_STATUS_PERMANENT,
+    );
+    file_put_contents($file->uri, 'test content');
+    $file = file_save($file);
+    return file_create_url($file->uri);
+  }
+
+  /**
+   * Helper function to create a node revision and return its expected path.
+   */
+  function createNodeRevisionAndGetPath() {
+    // The node needs at least two revisions in order for Drupal to allow
+    // access to the revision path.
+    $settings = array('revision' => TRUE);
+    $node = $this->drupalCreateNode($settings);
+    $node->vid = NULL;
+    node_save($node);
+    return 'node/' . $node->nid . '/revisions/' . $node->vid . '/view';
+  }
+
+}
+
+/**
+ * Tests that displays can be correctly overridden via the user interface.
+ */
 class ViewsUIWizardOverrideDisplaysTestCase extends ViewsUIWizardHelper {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views UI overridden displays',
@@ -615,7 +868,7 @@ class ViewsUIWizardOverrideDisplaysTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test that displays can be overridden via the UI.
+   * Tests that displays can be overridden via the UI.
    */
   function testOverrideDisplays() {
     // Create a basic view that shows all content, with a page and a block
@@ -676,7 +929,7 @@ class ViewsUIWizardOverrideDisplaysTestCase extends ViewsUIWizardHelper {
   }
 
   /**
-   * Test that the wizard correctly sets up default and overridden displays.
+   * Tests that the wizard correctly sets up default and overridden displays.
    */
   function testWizardMixedDefaultOverriddenDisplays() {
     // Create a basic view with a page, block, and feed. Give the page and feed
@@ -757,4 +1010,31 @@ class ViewsUIWizardOverrideDisplaysTestCase extends ViewsUIWizardHelper {
     $this->assertText($new_block_title);
     $this->assertNoText($view['block[title]']);
   }
+
+  /**
+   * Tests that the revert to all displays select-option works as expected.
+   */
+  function testRevertAllDisplays() {
+    // Create a basic view with a page, block. Because there is both a title on
+    // page and block we expect the title on the block be overriden.
+    $view['human_name'] = $this->randomName(16);
+    $view['name'] = strtolower($this->randomName(16));
+    $view['page[create]'] = 1;
+    $view['page[title]'] = $this->randomName(16);
+    $view['page[path]'] = $this->randomName(16);
+    $view['block[create]'] = 1;
+    $view['block[title]'] = $this->randomName(16);
+    $this->drupalPost('admin/structure/views/add', $view, t('Continue & edit'));
+
+    // Revert the title of the block back to the default ones, but submit some
+    // new values to be sure that the new value is not stored.
+    $edit = array();
+    $edit['title'] = $new_block_title = $this->randomName();
+    $edit['override[dropdown]'] = 'default_revert';
+
+    $this->drupalPost("admin/structure/views/nojs/display/{$view['name']}/block/title", $edit, t('Apply'));
+    $this->drupalPost("admin/structure/views/view/{$view['name']}/edit/block", array(), t('Save'));
+    $this->assertText($view['page[title]']);
+  }
+
 }

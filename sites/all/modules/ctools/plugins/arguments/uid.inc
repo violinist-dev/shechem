@@ -2,8 +2,7 @@
 
 /**
  * @file
- *
- * Plugin to provide an argument handler for a user id
+ * Plugin to provide an argument handler for a user id.
  */
 
 /**
@@ -12,7 +11,7 @@
  */
 $plugin = array(
   'title' => t("User: ID"),
-  // keyword to use for %substitution
+  // Keyword to use for %substitution.
   'keyword' => 'user',
   'description' => t('Creates a user context from a user ID argument.'),
   'context' => 'ctools_argument_uid_context',
@@ -21,8 +20,10 @@ $plugin = array(
     '#description' => t('Enter the user ID of a user for this argument'),
   ),
   'default' => array('to_arg' => TRUE),
-  'path placeholder' => '%pm_uid_arg', // This is in pagemanager.
+// This is in pagemanager.
+  'path placeholder' => '%pm_uid_arg',
   'path placeholder to_arg' => TRUE,
+  'no ui' => TRUE,
 );
 
 /**
@@ -43,7 +44,7 @@ function ctools_argument_uid_context($arg = NULL, $conf = NULL, $empty = FALSE) 
     return NULL;
   }
 
-  $account = user_load(array('uid' => $arg));
+  $account = user_load($arg);
   if (!$account) {
     return NULL;
   }

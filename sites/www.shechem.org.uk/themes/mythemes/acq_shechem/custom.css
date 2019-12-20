@@ -1,7 +1,6 @@
 ::-moz-selection,
 ::-webkit-selection,
 ::selection {
-    text-shadow: none;
     background: #572C15;
     color: #fff;
 }

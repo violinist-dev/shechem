@@ -1,18 +1,28 @@
 <?php
+
 /**
- * Test the view class.
+ * @file
+ * Views class tests.
  */
-class viewsViewTest extends ViewsSqlTest {
+
+/**
+ *
+ */
+class ViewsViewTest extends ViewsSqlTest {
+
+  /**
+   * Provide the test's meta information.
+   */
   public static function getInfo() {
     return array(
       'name' => 'Test the view class',
-      'description' => 'Tests some  functionality of the view class',
+      'description' => 'Tests some functionality of the view class',
       'group' => 'Views',
     );
   }
 
   /**
-   * Test the deconstructor to be sure that every kind of heavy objects are removed.
+   * Ensure that every kind of heavy objects are removed by the destructor.
    */
   function testDestroy() {
     $view = $this->view_test_destroy();
@@ -30,16 +40,22 @@ class viewsViewTest extends ViewsSqlTest {
     $this->assertViewDestroy($view);
   }
 
+  /**
+   * Assert that a given view is destroyed properly.
+   *
+   * @param object $view
+   *   The view to destroy.
+   */
   function assertViewDestroy($view) {
-    $this->assertFalse(isset($view->display['default']->handler), 'Take sure all displays are destroyed.');
-    $this->assertFalse(isset($view->display['attachment_1']->handler), 'Take sure all displays are destroyed.');
+    $this->assertFalse(isset($view->display['default']->handler), 'Make sure all displays are destroyed.');
+    $this->assertFalse(isset($view->display['attachment_1']->handler), 'Make sure all displays are destroyed.');
 
-    $this->assertFalse(isset($view->filter), 'Take sure all handlers are destroyed');
-    $this->assertFalse(isset($view->field), 'Take sure all handlers are destroyed');
-    $this->assertFalse(isset($view->argument), 'Take sure all handlers are destroyed');
-    $this->assertFalse(isset($view->relationship), 'Take sure all handlers are destroyed');
-    $this->assertFalse(isset($view->sort), 'Take sure all handlers are destroyed');
-    $this->assertFalse(isset($view->area), 'Take sure all handlers are destroyed');
+    $this->assertFalse(isset($view->filter), 'Make sure all handlers are destroyed');
+    $this->assertFalse(isset($view->field), 'Make sure all handlers are destroyed');
+    $this->assertFalse(isset($view->argument), 'Make sure all handlers are destroyed');
+    $this->assertFalse(isset($view->relationship), 'Make sure all handlers are destroyed');
+    $this->assertFalse(isset($view->sort), 'Make sure all handlers are destroyed');
+    $this->assertFalse(isset($view->area), 'Make sure all handlers are destroyed');
 
     $keys = array('current_display', 'display_handler', 'field', 'argument', 'filter', 'sort', 'relationship', 'header', 'footer', 'empty', 'query', 'result', 'inited', 'style_plugin', 'plugin_name', 'exposed_data', 'exposed_input', 'many_to_one_tables');
     foreach ($keys as $key) {
@@ -53,10 +69,50 @@ class viewsViewTest extends ViewsSqlTest {
   }
 
   /**
-   * This view provides some filters, fields, arguments, relationships, sorts, areas and attachments.
+   * Test deleting a view.
+   */
+  function testDelete() {
+    // Delete a database view.
+    $view = $this->view_test_delete();
+    $view->save();
+    $view = views_get_view($view->name);
+    $view->delete();
+
+    $view = views_get_view($view->name);
+    $this->assertNotNull($view, 'Make sure that the old view is still in the static cache.');
+
+    $view = views_get_view($view->name, TRUE);
+    $this->assertNull($view, "Make sure that the old view gets cleared by the reset parameter.");
+  }
+
+  /**
+   * Test validation.
+   */
+  function testValidate() {
+    // Test a view with multiple displays.
+    // Validating a view shouldn't change the active display.
+    // @todo Create an extra validation view.
+    $view = $this->view_test_destroy();
+    $view->set_display('page_1');
+
+    $view->validate();
+
+    $this->assertEqual('page_1', $view->current_display, "The display should be constant while validating");
+
+    // @todo Write real tests for the validation.
+    // In general the following things could be tested:
+    // - Deleted displays shouldn't be validated.
+    // - Multiple displays are validating and the errors are merged together.
+  }
+
+  /**
+   * Generate an example view.
+   *
+   * Includes:
+   *   filters, fields, arguments, relationships, sorts, areas and attachments.
    */
   function view_test_destroy() {
-    $view = new view;
+    $view = new view();
     $view->name = 'test_destroy';
     $view->description = '';
     $view->tag = '';
@@ -190,6 +246,8 @@ class viewsViewTest extends ViewsSqlTest {
       'default' => 'default',
       'page_1' => 'page_1',
     );
+
+    // @codingStandardsIgnoreLine
     $translatables['test_destroy'] = array(
       t('Master'),
       t('more'),
@@ -215,4 +273,46 @@ class viewsViewTest extends ViewsSqlTest {
 
     return $view;
   }
+
+  /**
+   * Creates a test view.
+   */
+  function view_test_delete() {
+    $view = new view();
+    $view->name = 'test_view_delete';
+    $view->description = '';
+    $view->tag = '';
+    $view->base_table = 'node';
+    $view->human_name = 'test_view_delete';
+    $view->core = 7;
+    $view->api_version = '3.0-alpha1';
+    $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+    /* Display: Defaults */
+    $handler = $view->new_display('default', 'Defaults', 'default');
+    $handler->display->display_options['access']['type'] = 'none';
+    $handler->display->display_options['cache']['type'] = 'none';
+    $handler->display->display_options['query']['type'] = 'views_query';
+    $handler->display->display_options['exposed_form']['type'] = 'basic';
+    $handler->display->display_options['pager']['type'] = 'full';
+    $handler->display->display_options['style_plugin'] = 'default';
+    $handler->display->display_options['row_plugin'] = 'fields';
+
+    // @codingStandardsIgnoreLine
+    $translatables['test_view_delete'] = array(
+      t('Defaults'),
+      t('more'),
+      t('Apply'),
+      t('Reset'),
+      t('Sort By'),
+      t('Asc'),
+      t('Desc'),
+      t('Items per page'),
+      t('- All -'),
+      t('Offset'),
+    );
+
+    return $view;
+  }
+
 }

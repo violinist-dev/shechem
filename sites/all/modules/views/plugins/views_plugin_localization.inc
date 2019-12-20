@@ -2,31 +2,44 @@
 
 /**
  * @file
- * Contains the base class for views localization plugins.
+ * Definition of views_plugin_localization.
+ */
+
+/**
+ * @defgroup views_localization_plugins Views localization plugins
+ * @{
+ * @todo.
+ *
+ * @see hook_views_plugins()
  */
 
 /**
  * The base plugin to handle localization of Views strings.
- *
- * @ingroup views_localization_plugins
  */
 class views_plugin_localization extends views_plugin {
-  // Store for exported strings
-  var $export_strings = array();
-  var $translate = TRUE;
+
+  /**
+   * Store for exported strings.
+   */
+  public $export_strings = array();
+
+  /**
+   *
+   */
+  public $translate = TRUE;
 
   /**
    * Initialize the plugin.
    *
-   * @param $view
+   * @param view $view
    *   The view object.
    */
-  function init(&$view) {
+  public function init(&$view) {
     $this->view = &$view;
   }
 
   /**
-   * Translate a string / text with format
+   * Translate a string / text with format.
    *
    * The $source parameter is an array with the following elements:
    * - value, source string
@@ -34,16 +47,17 @@ class views_plugin_localization extends views_plugin {
    * - keys. An array of keys to identify the string. Generally constructed from
    *   view name, display_id, and a property, e.g., 'header'.
    *
-   * @param $source
+   * @param string $source
    *   Full data for the string to be translated.
    *
    * @return string
-   *   Translated string / text
+   *   Translated string / text.
    */
-  function translate($source) {
-    // Allow other modules to make changes to the string before and after translation
+  public function translate($source) {
+    // Allow other modules to make changes to the string before and after
+    // translation.
     $source['pre_process'] = $this->invoke_translation_process($source, 'pre');
-    $source['translation'] = $this->translate_string($source['value'], $source['keys']);
+    $source['translation'] = $this->translate_string($source['value'], $source['keys'], $source['format']);
     $source['post_process'] = $this->invoke_translation_process($source, 'post');
     return $source['translation'];
   }
@@ -51,60 +65,67 @@ class views_plugin_localization extends views_plugin {
   /**
    * Translate a string.
    *
-   * @param $string
+   * @param string $string
    *   The string to be translated.
-   * @param $keys
+   * @param array $keys
    *   An array of keys to identify the string. Generally constructed from
-   *   view name, display_id, and a property, e.g., 'header'.
+   *   view name, display_id, and a property, e.g. 'header'.
+   * @param string $format
+   *   The input format of the string. This is optional.
    */
-  function translate_string($string, $keys = array()) {}
+  public function translate_string($string, $keys = array(), $format = '') {}
 
   /**
    * Save string source for translation.
    *
-   * @param $source
+   * @param string $source
    *   Full data for the string to be translated.
    */
-  function save($source) {
-    // Allow other modules to make changes to the string before saving
+  public function save($source) {
+    // Allow other modules to make changes to the string before saving.
     $source['pre_process'] = $this->invoke_translation_process($source, 'pre');
-    $this->save_string($source['value'], $source['keys']);
+    $this->save_string($source['value'], $source['keys'], isset($source['format']) ? $source['format'] : '');
   }
 
   /**
-   * Save a string for translation
+   * Save a string for translation.
    *
-   * @param $string
+   * @param string $string
    *   The string to be translated.
-   * @param $keys
+   * @param array $keys
    *   An array of keys to identify the string. Generally constructed from
    *   view name, display_id, and a property, e.g., 'header'.
+   * @param string $format
+   *   The input format of the string. This is optional.
    */
-  function save_string($string, $keys = array()) {}
+  public function save_string($string, $keys = array(), $format = '') {}
 
   /**
    * Delete a string.
    *
-   * @param $source
+   * @param string $source
    *   Full data for the string to be translated.
    */
-  function delete($source) { }
+  public function delete($source) {
+  }
 
   /**
    * Collect strings to be exported to code.
    *
-   * @param $source
+   * @param string $source
    *   Full data for the string to be translated.
    */
-  function export($source) { }
+  public function export($source) {
+  }
 
   /**
    * Render any collected exported strings to code.
    *
-   * @param $indent
+   * @param string $indent
    *   An optional indentation for prettifying nested code.
    */
-  function export_render($indent = '  ') { }
+  public function export_render($indent = '  ') {
+  }
 
   /**
    * Invoke hook_translation_pre_process() or hook_translation_post_process().
@@ -112,7 +133,7 @@ class views_plugin_localization extends views_plugin {
    * Like node_invoke_nodeapi(), this function is needed to enable both passing
    * by reference and fetching return values.
    */
-  function invoke_translation_process(&$value, $op) {
+  public function invoke_translation_process(&$value, $op) {
     $return = array();
     $hook = 'translation_' . $op . '_process';
     foreach (module_implements($hook) as $module) {
@@ -125,7 +146,10 @@ class views_plugin_localization extends views_plugin {
     return $return;
   }
 
-  function process_locale_strings($op) {
+  /**
+   *
+   */
+  public function process_locale_strings($op) {
     $this->view->init_display();
 
     foreach ($this->view->display as $display_id => $display) {
@@ -135,16 +159,20 @@ class views_plugin_localization extends views_plugin {
         $translatable[] = array('value' => $display->display_title, 'keys' => array('display_title'));
       }
       // Unpack handlers.
-      $this->view->display[$display_id]->handler->unpack_translatables($translatable);
+      if (is_object($this->view->display[$display_id]->handler)) {
+        $this->view->display[$display_id]->handler->unpack_translatables($translatable);
+      }
       foreach ($translatable as $data) {
         $data['keys'] = array_merge(array($this->view->name, $display_id), $data['keys']);
         switch ($op) {
           case 'save':
             $this->save($data);
             break;
+
           case 'delete':
             $this->delete($data);
             break;
+
           case 'export':
             $this->export($data);
             break;
@@ -152,4 +180,9 @@ class views_plugin_localization extends views_plugin {
       }
     }
   }
+
 }
+
+/**
+ * @}
+ */

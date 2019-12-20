@@ -175,6 +175,23 @@ function hook_INCLUDE_plugin() {
 }
 
 /**
+ * Alter plugin definitions before loading and further processing.
+ *
+ * @param array $info
+ *   The plugin definitions to alter.
+ * @param string $hook
+ *   The plugin type being loaded. Can be 'editor' or 'plugin'.
+ */
+function hook_wysiwyg_load_includes_alter(&$info, $hook) {
+  if ($hook == 'editor' && isset($info['ckeditor'])) {
+    $info['ckeditor']['version callback'] = 'my_own_version_callback';
+  }
+  elseif ($hook == 'plugin' && isset($info['break'])) {
+    $info['break']['title'] = t('Summary delimiter');
+  }
+}
+
+/**
  * Define a Wysiwyg editor library.
  *
  * @todo Complete this documentation.
@@ -206,7 +223,7 @@ function hook_INCLUDE_editor() {
     // (optional) A callback to invoke to return additional notes for installing
     // the editor library in the administrative list/overview.
     'install note callback' => 'wysiwyg_ckeditor_install_note',
-    // The minimum and maximum versions the implemetation has been tested with.
+    // The minimum and maximum versions the implementation has been tested with.
     // Users will be notified if installing a version not within this range.
     'verified version range' => array('1.2.3', '3.4.5'),
     // (optional) A callback to perform migrations of the settings stored in a
@@ -320,7 +337,7 @@ function hook_wysiwyg_editor_settings_alter(&$settings, $context) {
  *
  * This hook acts like a pre-render callback to the style element normally
  * output in the document header. It is invoked before Core has
- * sorted/grouped/aggregated stylehsheets and changes made here will only have
+ * sorted/grouped/aggregated stylesheets and changes made here will only have
  * an effect on the stylesheets used in an editor's WYSIWYG mode.
  * Wysiwyg will only keep items if their type is 'file' or 'inline' and only if
  * they are in the group CSS_THEME.

@@ -213,6 +213,12 @@ Drupal.behaviors.attachWysiwyg = {
     }
     wysiwygs.each(function () {
       Drupal.wysiwygDetach(context, this.id, trigger);
+      if (trigger === 'unload') {
+        // Delete the instance in case the field is removed. This is safe since
+        // detaching with the unload trigger is reverts to the 'none' "editor".
+        delete _internalInstances[this.id];
+        delete Drupal.wysiwyg.instances[this.id];
+      }
     });
   }
 };
@@ -235,25 +241,12 @@ Drupal.behaviors.attachWysiwyg = {
  */
 Drupal.wysiwygAttach = function(context, fieldId) {
   var fieldInfo = getFieldInfo(fieldId),
-      formatInfo = fieldInfo.getFormatInfo(),
-      editorSettings = formatInfo.editorSettings,
-      editor = formatInfo.editor,
-      previousStatus = false,
-      previousEditor = 'none',
-      doSummary = (fieldInfo.summary && (!fieldInfo.formats[fieldInfo.activeFormat] || !fieldInfo.formats[fieldInfo.activeFormat].skip_summary));
-  if (_internalInstances[fieldId]) {
-    previousStatus = _internalInstances[fieldId]['status'];
-    previousEditor = _internalInstances[fieldId].editor;
-  }
+    doSummary = (fieldInfo.summary && (!fieldInfo.formats[fieldInfo.activeFormat] || !fieldInfo.formats[fieldInfo.activeFormat].skip_summary));
   // Detach any previous editor instance if enabled, else remove the grippie.
-  detachFromField(context, {'editor': previousEditor, 'status': previousStatus, 'field': fieldId, 'resizable': fieldInfo.resizable}, 'unload');
-  if (doSummary) {
-    // Summary instances may have a different status if no real editor was
-    // attached yet because the field was hidden.
-    if (_internalInstances[fieldInfo.summary]) {
-      previousStatus = _internalInstances[fieldInfo.summary]['status'];
-    }
-    detachFromField(context, {'editor': previousEditor, 'status': previousStatus, 'field': fieldInfo.summary, 'resizable': fieldInfo.resizable}, 'unload');
+  detachFromField(fieldId, context, 'unload');
+  var wasSummary = !!_internalInstances[fieldInfo.summary];
+  if (doSummary || wasSummary) {
+    detachFromField(fieldId, context, 'unload', {summary: true});
   }
   // Store this field id, so (external) plugins can use it.
   // @todo Wrong point in time. Probably can only supported by editors which
@@ -262,21 +255,21 @@ Drupal.wysiwygAttach = function(context, fieldId) {
   // Attach or update toggle link, if enabled.
   Drupal.wysiwygAttachToggleLink(context, fieldId);
   // Attach to main field.
-  attachToField(context, {'status': fieldInfo.enabled, 'editor': editor, 'field': fieldId, 'format': fieldInfo.activeFormat, 'resizable': fieldInfo.resizable}, editorSettings);
+  attachToField(fieldId, context);
   // Attach to summary field.
-  if (doSummary) {
+  if (doSummary || wasSummary) {
     // If the summary wrapper is visible, attach immediately.
     if ($('#' + fieldInfo.summary).parents('.text-summary-wrapper').is(':visible')) {
-      attachToField(context, {'status': fieldInfo.enabled, 'editor': editor, 'field': fieldInfo.summary, 'format': fieldInfo.activeFormat, 'resizable': fieldInfo.resizable}, editorSettings);
+      attachToField(fieldId, context, {summary: true, forceDisabled: !doSummary});
     }
     else {
       // Attach an instance of the 'none' editor to have consistency while the
       // summary is hidden, then switch to a real editor instance when shown.
-      attachToField(context, {'status': false, 'editor': editor, 'field': fieldInfo.summary, 'format': fieldInfo.activeFormat, 'resizable': fieldInfo.resizable}, editorSettings);
+      attachToField(fieldId, context, {summary: true, forceDisabled: true});
       // Unbind any existing click handler to avoid double toggling.
-      $('#' + fieldId).parents('.text-format-wrapper').find('.link-edit-summary').unbind('click.wysiwyg').bind('click.wysiwyg', function () {
-        detachFromField(context, {'status': false, 'editor': editor, 'field': fieldInfo.summary, 'format': fieldInfo.activeFormat, 'resizable': fieldInfo.resizable}, editorSettings);
-        attachToField(context, {'status': fieldInfo.enabled, 'editor': editor, 'field': fieldInfo.summary, 'format': fieldInfo.activeFormat, 'resizable': fieldInfo.resizable}, editorSettings);
+      $('#' + fieldId).parents('.text-format-wrapper').find('.link-edit-summary').closest('.field-edit-link').unbind('click.wysiwyg').bind('click.wysiwyg', function () {
+        detachFromField(fieldId, context, 'unload', {summary: true});
+        attachToField(fieldId, context, {summary: true, forceDisabled: !doSummary});
         $(this).unbind('click.wysiwyg');
       });
     }
@@ -355,7 +348,7 @@ function WysiwygInstance(internalInstance) {
   /**
    * Open a native editor dialog.
    *
-   * Use of this method i not recomended due to limited editor support.
+   * Use of this method i not recommended due to limited editor support.
    *
    * @param dialog
    *   An object with dialog settings. Keys used:
@@ -397,13 +390,59 @@ function WysiwygInstance(internalInstance) {
 function WysiwygInternalInstance(params) {
   $.extend(true, this, Drupal.wysiwyg.editor.instance[params.editor]);
   $.extend(true, this, params);
+  this.$field = $('#' + this.field);
   this.pluginInfo = {
     'global': getPluginInfo('global:' + params.editor),
     'instances': getPluginInfo(params.format)
   };
   // Keep track of the public face to keep it synced.
   this.publicInstance = new WysiwygInstance(this);
+  // Internal list of active element watchers.
+  var watchers = [];
+
+  /**
+   * Watch an element and notify Wysiwyg when it changes.
+   *
+   * @param $element
+   *   A jQuery object with the element to watch.
+   * @param watchContext
+   *   An optional only argument for the condition callback on change events.
+   * @param watchCondition
+   *   An optional callback returning TRUE if to notify Wysiwyg, else FALSE.
+   *
+   * @see ElementWatcher
+   */
+  this.startWatching = function ($element, watchContext, watchCondition) {
+    var watcher = new ElementWatcher();
+    var instance = this;
+    watcher.addCallback(function () {
+      instance.contentsChanged();
+    });
+    watcher.start($element, watchContext, watchCondition);
+    watchers.push(watcher);
+  };
+
+  /**
+   * Stop watching all element for changes.
+   */
+  this.stopWatching = function () {
+    while (watchers.length) {
+      var watcher = watchers.pop();
+      watcher.stop();
+    }
+  };
 }
+
+/**
+ * Notify Wysiwyg that the editor contents for this instance have changed.
+ */
+WysiwygInternalInstance.prototype.contentsChanged = function () {
+  // Only need to flip changed status once.
+  if (this.$field.attr('data-wysiwyg-value-is-changed') === 'false') {
+    this.$field.attr('data-wysiwyg-value-is-changed', 'true');
+  }
+  this.$field.trigger('drupal-wysiwyg-changed', this.publicInstance);
+};
 
 /**
  * Updates internal settings and state caches with new information.
@@ -482,6 +521,10 @@ function updateInternalState(settings, context) {
     var fieldId = trigger.field;
     var baseFieldId = (fieldId.indexOf('--') === -1 ? fieldId : fieldId.substr(0, fieldId.indexOf('--')));
     var fieldInfo = null;
+    if ($('#' + triggerId, context).length === 0) {
+      // Skip fields which may have been removed or are not in this context.
+      continue;
+    }
     if (!(fieldInfo = _fieldInfoStorage[baseFieldId])) {
       fieldInfo = _fieldInfoStorage[baseFieldId] = {
         formats: {},
@@ -495,15 +538,15 @@ function updateInternalState(settings, context) {
           return getFormatInfo(this.activeFormat);
         }
         // 'activeFormat' and 'enabled' added below.
-      }
-    };
+      };
+    }
     for (var format in trigger) {
       if (format.indexOf('format') != 0 || fieldInfo.formats[format]) {
         continue;
       }
       fieldInfo.formats[format] = {
         'enabled': trigger[format].status
-      }
+      };
       if (!_formatInfoStorage[format]) {
         _formatInfoStorage[format] = {
           editor: trigger[format].editor,
@@ -544,38 +587,44 @@ function updateInternalState(settings, context) {
  *
  * Creates the 'instance' object under Drupal.wysiwyg.instances[fieldId].
  *
+ * @param mainFieldId
+ *  The id of the field's main element, for fetching field info.
  * @param context
  *   A DOM element, supplied by Drupal.attachBehaviors().
  * @param params
- *   An object containing state information for the editor with the following
- *   properties:
- *   - 'status': A boolean stating whether the editor is currently active. If
- *     false, the default textarea behaviors will be attached instead (aka the
- *     'none' editor implementation).
- *   - 'editor': The internal name of the editor to attach when active.
- *   - 'field': The field id to use as an output target for the editor.
- *   - 'format': The name of the active text format (prefixed 'format').
- *   - 'resizable': A boolean indicating whether the original textarea was
- *      resizable.
- *   Note: This parameter is passed directly to the editor implementation and
- *   needs to have been reconstructed or cloned before attaching.
- * @param editorSettings
- *   An object containing all the settings the editor needs for this field.
- *   Settings are automatically cloned to prevent editors from modifying them.
+ *   An optional object for overriding state information for the editor with the
+ *   following properties:
+ *   - 'summary': Set to true to indicate to attach to the summary instead of
+ *     the main element. Defaults to false.
+ *   - 'forceDisabled': Set to true to override the current state of the field
+ *     and assume it is disabled. Useful for hidden summary instances.
+ *
+ * @see Drupal.wysiwygAttach()
  */
-function attachToField(context, params, editorSettings) {
+function attachToField(mainFieldId, context, params) {
+  params = params || {};
+  var fieldInfo = getFieldInfo(mainFieldId);
+  var fieldId = (params.summary ? fieldInfo.summary : mainFieldId);
+  var formatInfo = fieldInfo.getFormatInfo();
   // If the editor isn't active, attach default behaviors instead.
-  var editor = (params.status ? params.editor : 'none');
+  var enabled = (fieldInfo.enabled && !params.forceDisabled);
+  var editor = (enabled ? formatInfo.editor : 'none');
   // Settings are deep merged (cloned) to prevent editor implementations from
   // permanently modifying them while attaching.
-  var clonedSettings = jQuery.extend(true, {}, editorSettings);
+  var clonedSettings = (enabled ? jQuery.extend(true, {}, formatInfo.editorSettings) : {});
   // (Re-)initialize field instance.
-  var internalInstance = new WysiwygInternalInstance(params);
-  _internalInstances[params.field] = internalInstance;
-  Drupal.wysiwyg.instances[params.field] = internalInstance.publicInstance;
-  if ($.isFunction(Drupal.wysiwyg.editor.attach[editor])) {
-    Drupal.wysiwyg.editor.attach[editor].call(internalInstance, context, params, params.status ? clonedSettings : {});
-  }
+  var stateParams = {
+    field: fieldId,
+    editor: formatInfo.editor,
+    'status': enabled,
+    format: fieldInfo.activeFormat,
+    resizable: fieldInfo.resizable
+  };
+  var internalInstance = new WysiwygInternalInstance(stateParams);
+  _internalInstances[fieldId] = internalInstance;
+  Drupal.wysiwyg.instances[fieldId] = internalInstance.publicInstance;
+  // Attach editor, if enabled by default or last state was enabled.
+  Drupal.wysiwyg.editor.attach[editor].call(internalInstance, context, stateParams, clonedSettings);
 }
 
 /**
@@ -601,29 +650,22 @@ function attachToField(context, params, editorSettings) {
  */
 Drupal.wysiwygDetach = function (context, fieldId, trigger) {
   var fieldInfo = getFieldInfo(fieldId),
-      editor = fieldInfo.getFormatInfo().editor,
-      trigger = trigger || 'unload',
-      previousStatus = (_internalInstances[fieldId] && _internalInstances[fieldId]['status']);
+      trigger = trigger || 'unload';
   // Detach from main field.
-  detachFromField(context, {'editor': editor, 'status': previousStatus, 'field': fieldId, 'resizable': fieldInfo.resizable}, trigger);
+  detachFromField(fieldId, context, trigger);
   if (trigger == 'unload') {
     // Attach the resize behavior by forcing status to false. Other values are
     // intentionally kept the same to show which editor is normally attached.
-    attachToField(context, {'editor': editor, 'status': false, 'format': fieldInfo.activeFormat, 'field': fieldId, 'resizable': fieldInfo.resizable});
+    attachToField(fieldId, context, {forceDisabled: true});
     Drupal.wysiwygAttachToggleLink(context, fieldId);
   }
   // Detach from summary field.
   if (fieldInfo.summary && _internalInstances[fieldInfo.summary]) {
     // The "Edit summary" click handler could re-enable the editor by mistake.
     $('#' + fieldId).parents('.text-format-wrapper').find('.link-edit-summary').unbind('click.wysiwyg');
-    // Summary instances may have a different status if no real editor was
-    // attached yet because the field was hidden.
-    if (_internalInstances[fieldInfo.summary]) {
-      previousStatus = _internalInstances[fieldInfo.summary]['status'];
-    }
-    detachFromField(context, {'editor': editor, 'status': previousStatus, 'field': fieldInfo.summary, 'resizable': fieldInfo.resizable}, trigger);
+    detachFromField(fieldId, context, trigger, {summary: true});
     if (trigger == 'unload') {
-      attachToField(context, {'editor': editor, 'status': false, 'format': fieldInfo.activeFormat, 'field': fieldInfo.summary, 'resizable': fieldInfo.resizable});
+      attachToField(fieldId, context, {summary: true});
     }
   }
 };
@@ -633,38 +675,53 @@ Drupal.wysiwygDetach = function (context, fieldId, trigger) {
  *
  * Removes the 'instance' object under Drupal.wysiwyg.instances[fieldId].
  *
+ * @param mainFieldId
+ *  The id of the field's main element, for fetching field info.
  * @param context
  *   A DOM element, supplied by Drupal.detachBehaviors().
- * @param params
- *   An object containing state information for the editor with the following
- *   properties:
- *   - 'status': A boolean stating whether the editor is currently active. If
- *     false, the default textarea behaviors will be attached instead (aka the
- *     'none' editor implementation).
- *   - 'editor': The internal name of the editor to attach when active.
- *   - 'field': The field id to use as an output target for the editor.
- *   - 'format': The name of the active text format (prefixed 'format').
- *   - 'resizable': A boolean indicating whether the original textarea was
- *      resizable.
- *   Note: This parameter is passed directly to the editor implementation and
- *   needs to have been reconstructed or cloned before detaching.
  * @param trigger
  *   A string describing what is causing the editor to be detached.
  *   - 'serialize': The editor normally just syncs its contents to the original
  *     textarea for value serialization before an AJAX request.
  *   - 'unload': The editor is to be removed completely and the original
  *     textarea restored.
+ * @param params
+ *   An optional object for overriding state information for the editor with the
+ *   following properties:
+ *   - 'summary': Set to true to indicate to detach from the summary instead of
+ *     the main element. Defaults to false.
  *
  * @see Drupal.wysiwygDetach()
  */
-function detachFromField(context, params, trigger) {
-  var editor = (params.status ? params.editor : 'none');
-  if (jQuery.isFunction(Drupal.wysiwyg.editor.detach[editor])) {
-    Drupal.wysiwyg.editor.detach[editor].call(_internalInstances[params.field], context, params, trigger);
+function detachFromField(mainFieldId, context, trigger, params) {
+  params = params || {};
+  var fieldInfo = getFieldInfo(mainFieldId);
+  var fieldId = (params.summary ? fieldInfo.summary : mainFieldId);
+  var $field = $('#' + fieldId);
+  var enabled = false;
+  var editor = 'none';
+  if (_internalInstances[fieldId]) {
+    enabled = _internalInstances[fieldId]['status'];
+    editor = (enabled ? _internalInstances[fieldId].editor : 'none');
   }
-  if (trigger == 'unload') {
-    delete Drupal.wysiwyg.instances[params.field];
-    delete _internalInstances[params.field];
+  var stateParams = {
+    field: fieldId,
+    'status': enabled,
+    editor: fieldInfo.editor,
+    format: fieldInfo.activeFormat,
+    resizable: fieldInfo.resizable
+  };
+  if (jQuery.isFunction(Drupal.wysiwyg.editor.detach[editor])) {
+    Drupal.wysiwyg.editor.detach[editor].call(_internalInstances[fieldId], context, stateParams, trigger);
+  }
+  // Restore the original value of the user didn't make any changes yet.
+  if (enabled && $field.attr('data-wysiwyg-value-is-changed') === 'false') {
+    $field.val($field.attr('data-wysiwyg-value-original'));
+  }
+  if (trigger == 'unload' && _internalInstances[fieldId]) {
+    _internalInstances[fieldId].stopWatching();
+    delete Drupal.wysiwyg.instances[fieldId];
+    delete _internalInstances[fieldId];
   }
 }
 
@@ -713,6 +770,7 @@ Drupal.wysiwyg.toggleWysiwyg = function (event) {
   var context = event.data.context,
       fieldId = event.data.fieldId,
       fieldInfo = getFieldInfo(fieldId);
+  delete fieldInfo.previousFormat;
   // Toggling the enabled state indirectly toggles use of the 'none' editor.
   if (fieldInfo.enabled) {
     fieldInfo.enabled = false;
@@ -730,16 +788,42 @@ Drupal.wysiwyg.toggleWysiwyg = function (event) {
  * Event handler for when the selected format is changed.
  */
 function formatChanged(event) {
-  var fieldId = _selectToField[this.id.replace(/--\d+$/,'')];
-  var context = $(this).closest('form');
+  var fieldId = _selectToField[this.id.replace(/--\d+$/, '')];
+  var $field = $('#' + fieldId);
+  var $select = $(this);
+  var context = $select.closest('form');
+  var newFormat = 'format' + $select.val();
   // Field state is fetched by reference.
   var currentField = getFieldInfo(fieldId);
+  // Prevent double-attaching if change event is triggered manually.
+  if (newFormat === currentField.activeFormat) {
+    return;
+  }
   // Save the state of the current format.
   if (currentField.formats[currentField.activeFormat]) {
     currentField.formats[currentField.activeFormat].enabled = currentField.enabled;
   }
+  // When changing to a text format that has an editor associated with it, then
+  // first ask for confirmation, because switching text formats might cause
+  // certain markup to be stripped away.
+  if ($field.val().length > 0 && currentField.formats[newFormat] && currentField.formats[newFormat].editor !== 'none') {
+    var message = Drupal.t('Are you sure you want to change the text format?\n\nChanging the text format to @text_format and enabling the associated editor will permanently remove content that is not allowed in both text formats.\n\nCancel and save your changes before switching the text format to avoid losing data.', {
+      '@text_format': $select.find('option:selected').text()
+    });
+    if (!window.confirm(message)) {
+      // Restore the active format. We cannot simply call event.preventDefault()
+      // because jQuery's change event is only triggered after the change has
+      // already been accepted.
+      // The substr() removes the Wysiwyg-only 'format' prefix.
+      $select.val(currentField.activeFormat.substr(6));
+      // Trick core into showing the correct text format description.
+      $select.trigger('change');
+      return;
+    }
+  }
   // Switch format/profile.
-  currentField.activeFormat = 'format' + this.value;
+  currentField.previousFormat = currentField.activeFormat;
+  currentField.activeFormat = newFormat;
   // Load the state from the new format.
   if (currentField.formats[currentField.activeFormat]) {
     currentField.enabled = currentField.formats[currentField.activeFormat].enabled;
@@ -896,5 +980,130 @@ $(document).unbind('CToolsDetachBehaviors.wysiwyg').bind('CToolsDetachBehaviors.
     delete _fieldInfoStorage[baseFieldId];
   });
 });
+
+
+/**
+ * Helper to detect changes in elements.
+ */
+function ElementWatcher() {
+  var timer;
+  var el;
+  var callbacks = [];
+  var originalContent;
+  var condition;
+  var context;
+
+  /**
+   * Invoke all registered callbacks.
+   */
+  function changed() {
+    for (var i = 0; i < callbacks.length; i++) {
+      callbacks[i][0].apply(callbacks[i][1]);
+    }
+  }
+
+  /**
+   * Start tracking changes in an element.
+   *
+   * Tracks markup changes by listening to input events or polling elements.
+   *
+   * @param element
+   *   A jQuery-wrapped element to track changes for.
+   * @param watchContext
+   *   An optional object to pass as argument to the watchCondition callback.
+   * @param watchCondition
+   *   A callback which can return TRUE or FALSE to dynamically allow or block
+   *   the added change callbacks. Useful when running multiple watchers in
+   *   parallel and only one should react depending on some condition.
+   */
+  this.start = function (element, watchContext, watchCondition) {
+    el = element;
+    context = watchContext;
+    condition = watchCondition;
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    if (el.is(':input')) {
+      originalContent = el.val();
+      el.bind('input.wysiwyg-watch selectionchange.wysiwyg-watch propertychange.wysiwyg-watch change.wysiwyg-watch', function (ev) {
+        if (!condition || condition(context)) {
+          var currentContent = el.val();
+          if (currentContent !== originalContent) {
+            if (originalContent != undefined) {
+              changed();
+            }
+            originalContent = currentContent;
+          }
+        }
+      });
+    }
+    else if (!timer) {
+      originalContent = el.html();
+      timer = setInterval(function () {
+        if (!condition || condition(context)) {
+          var currentContent = el.html();
+          if (currentContent !== originalContent) {
+            changed();
+            originalContent = currentContent;
+          }
+        }
+      }, 100);
+    }
+  };
+
+  /**
+   * Stop tracking changes.
+   *
+   * Unbinds any event handlers and stops polling.
+   */
+  this.stop = function () {
+    if (el.is(':input')) {
+      el.unbind('input.wysiwyg-watch selectionchange.wysiwyg-watch propertychange.wysiwyg-watch change.wysiwyg-watch');
+    }
+    else if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    el = null;
+    context = null;
+    condition = null;
+  };
+
+  /**
+   * Add a function to be called when "something" has changed.
+   *
+   * @param callback
+   *   The function to call.
+   */
+  this.addCallback = function (callback, context) {
+    if (!context) {
+      context = window;
+    }
+    callbacks.push([callback, context]);
+  };
+}
+
+Drupal.wysiwyg.utilities = {
+
+  /**
+   * Perform any actions needed to make editors work in fullscreen mode.
+   *
+   * @see Drupal.wysiwyg.utilities.onFullscreenExit()
+   */
+  onFullscreenEnter: function () {
+    $('#toolbar, #admin-menu', Drupal.overlayChild ? window.parent.document : document).hide();
+  },
+
+  /**
+   * Undo any actions performed when going to fullscreen mode.
+   *
+   * @see Drupal.wysiwyg.utilities.onFullscreenEnter()
+   */
+  onFullscreenExit: function () {
+    $('#toolbar, #admin-menu', Drupal.overlayChild ? window.parent.document : document).show();
+  }
+
+}
 
 })(jQuery);

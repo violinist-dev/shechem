@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap.xmlsitemap.inc,v 1.12 2010/10/18 20:16:28 davereid Exp $
 
 /**
  * @file
@@ -7,54 +6,118 @@
  */
 
 /**
+ * Class for XML Sitemap Exception.
+ */
+class XMLSitemapException extends Exception {
+
+}
+
+/**
+ * Class for XML Sitemap Generation Exception.
+ */
+class XMLSitemapGenerationException extends XMLSitemapException {
+
+}
+
+/**
  * Extended class for writing XML sitemap files.
  */
 class XMLSitemapWriter extends XMLWriter {
-  protected $status = TRUE;
+
   protected $uri = NULL;
   protected $sitemapElementCount = 0;
   protected $linkCountFlush = 500;
   protected $sitemap = NULL;
+
+  /**
+   * Sitemap Page.
+   *
+   * @var string
+   *
+   * @codingStandardsIgnoreStart
+   */
   protected $sitemap_page = NULL;
+
+  /**
+   * Root Element.
+   *
+   * @var string.
+   *
+   * @codingStandardsIgnoreEnd
+   */
   protected $rootElement = 'urlset';
 
   /**
    * Constructor.
    *
-   * @param $sitemap
+   * @param array $sitemap
    *   The sitemap array.
-   * @param $page
+   * @param string $page
    *   The current page of the sitemap being generated.
+   *
+   * @codingStandardsIgnoreStart
    */
-  function __construct(stdClass $sitemap, $page) {
+  public function __construct(stdClass $sitemap, $page) {
+    // @codingStandardsIgnoreEnd
     $this->sitemap = $sitemap;
     $this->sitemap_page = $page;
     $this->uri = xmlsitemap_sitemap_get_file($sitemap, $page);
     $this->openUri($this->uri);
   }
 
+  /**
+   * Open URI.
+   */
   public function openUri($uri) {
     $return = parent::openUri($uri);
     if (!$return) {
-      trigger_error(t('Could not open file @file for writing.', array('@file' => $uri)));
+      throw new XMLSitemapGenerationException(t('Could not open file @file for writing.', array('@file' => $uri)));
     }
     return $return;
   }
 
+  /**
+   * Start Document.
+   */
   public function startDocument($version = '1.0', $encoding = 'UTF-8', $standalone = NULL) {
     $this->setIndent(FALSE);
-    parent::startDocument($version, $encoding);
+    $result = parent::startDocument($version, $encoding);
+    if (!$result) {
+      throw new XMLSitemapGenerationException(t('Unknown error occurred while writing to file @file.', array('@file' => $this->uri)));
+    }
     if (variable_get('xmlsitemap_xsl', 1)) {
       $this->writeXSL();
     }
     $this->startElement($this->rootElement, TRUE);
+    return $result;
+  }
+
+  /**
+   * Get Sitemap URL.
+   */
+  public function getSitemapUrl($path, array $options = array()) {
+    global $base_url;
+    $options += $this->sitemap->uri['options'];
+    $options += array(
+      'absolute' => TRUE,
+      'base_url' => variable_get('xmlsitemap_base_url', $base_url),
+      'language' => language_default(),
+      'alias' => TRUE,
+    );
+    if (!empty($options['protocol_relative'])) {
+      $options['base_url'] = preg_replace('~^https?:~', '', $options['base_url']);
+    }
+    return url($path, $options);
   }
 
   /**
    * Add the XML stylesheet to the XML page.
+   *
+   * @codingStandardsIgnoreStart
    */
   public function writeXSL() {
-    $this->writePi('xml-stylesheet', 'type="text/xsl" href="' . url('sitemap.xsl') . '"');
+    // @codingStandardsIgnoreEnd
+    $this->writePi('xml-stylesheet', 'type="text/xsl" href="' . $this->getSitemapUrl('sitemap.xsl', array('absolute' => FALSE)) . '"');
     $this->writeRaw(PHP_EOL);
   }
 
@@ -67,13 +130,25 @@ class XMLSitemapWriter extends XMLWriter {
       $attributes['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance';
       $attributes['xsi:schemaLocation'] = 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd';
     }
+
+    drupal_alter('xmlsitemap_root_attributes', $attributes, $this->sitemap);
+
     return $attributes;
   }
 
+  /**
+   * Generate XML.
+   *
+   * @codingStandardsIgnoreStart
+   */
   public function generateXML() {
+    // @codingStandardsIgnoreEnd
     return xmlsitemap_generate_chunk($this->sitemap, $this, $this->sitemap_page);
   }
 
+  /**
+   * Start Element.
+   */
   public function startElement($name, $root = FALSE) {
     parent::startElement($name);
 
@@ -88,9 +163,9 @@ class XMLSitemapWriter extends XMLWriter {
   /**
    * Write an full XML sitemap element tag.
    *
-   * @param $name
+   * @param string $name
    *   The element name.
-   * @param $element
+   * @param array $element
    *   An array of the elements properties and values.
    */
   public function writeSitemapElement($name, array &$element) {
@@ -108,99 +183,113 @@ class XMLSitemapWriter extends XMLWriter {
   /**
    * Write full element tag including support for nested elements.
    *
-   * @param $name
+   * @param string $name
    *   The element name.
-   * @param $content
+   * @param string|array $content
    *   The element contents or an array of the elements' sub-elements.
+   *
+   * @todo Missing a return value since XMLWriter::writeElement() has one.
    */
-  public function writeElement($name, $content = '') {
+  public function writeElement($name, $content = NULL) {
     if (is_array($content)) {
       $this->startElement($name);
-      foreach ($content as $sub_name => $sub_content) {
-        $this->writeElement($sub_name, $sub_content);
-      }
+      $xml_content = format_xml_elements($content);
+      // Remove additional spaces from the output.
+      $xml_content = str_replace(array(" <", ">\n"), array("<", ">"), $xml_content);
+      $this->writeRaw($xml_content);
       $this->endElement();
     }
     else {
-      parent::writeElement($name, $content);
+      parent::writeElement($name, check_plain((string) $content));
     }
   }
 
   /**
-   * Override of XMLWriter::flush() to track file writing status.
+   * Get URI.
+   *
+   * @codingStandardsIgnoreStart
    */
-  public function flush($empty = TRUE) {
-    $return = parent::flush($empty);
-    $this->status &= (bool) $return;
-    return $return;
-  }
-
-  public function getStatus() {
-    return $this->status;
-  }
-
   public function getURI() {
+    // @codingStandardsIgnoreEnd
     return $this->uri;
   }
 
+  /**
+   * Get Count Sitemap Element.
+   */
   public function getSitemapElementCount() {
     return $this->sitemapElementCount;
   }
 
+  /**
+   * Document.
+   */
   public function endDocument() {
     $return = parent::endDocument();
 
-    if (!$this->getStatus()) {
-      trigger_error(t('Unknown error occurred while writing to file @file.', array('@file' => $this->uri)));
-      return FALSE;
+    if (!$return) {
+      throw new XMLSitemapGenerationException(t('Unknown error occurred while writing to file @file.', array('@file' => $this->uri)));
     }
 
-    //if (xmlsitemap_var('gz')) {
+    // @code
+    // If (xmlsitemap_var('gz')) {
     //  $file_gz = $file . '.gz';
     //  file_put_contents($file_gz, gzencode(file_get_contents($file), 9));
-    //}
-
+    // }
+    // @endcode
     return $return;
   }
+
 }
 
+/**
+ * XML Sitemap Index Writer.
+ */
 class XMLSitemapIndexWriter extends XMLSitemapWriter {
+
   protected $rootElement = 'sitemapindex';
 
-  function __construct(stdClass $sitemap, $page = 'index') {
+  /**
+   * Construct.
+   */
+  public function __construct(stdClass $sitemap, $page = 'index') {
     parent::__construct($sitemap, 'index');
   }
 
+  /**
+   * Get Root Attributes.
+   */
   public function getRootAttributes() {
     $attributes['xmlns'] = 'http://www.sitemaps.org/schemas/sitemap/0.9';
     if (variable_get('xmlsitemap_developer_mode', 0)) {
       $attributes['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance';
       $attributes['xsi:schemaLocation'] = 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd';
     }
+
+    drupal_alter('xmlsitemap_root_attributes', $attributes, $this->sitemap);
+
     return $attributes;
   }
 
+  /**
+   * Generate XML.
+   *
+   * @codingStandardsIgnoreStart
+   */
   public function generateXML() {
+    // @codingStandardsIgnoreEnd
     $lastmod_format = variable_get('xmlsitemap_lastmod_format', XMLSITEMAP_LASTMOD_MEDIUM);
 
-    $url_options = $this->sitemap->uri['options'];
-    $url_options += array(
-      'absolute' => TRUE,
-      'base_url' => variable_get('xmlsitemap_base_url', $GLOBALS['base_url']),
-      'language' => language_default(),
-      'alias' => TRUE,
-    );
-
     for ($i = 1; $i <= $this->sitemap->chunks; $i++) {
-      $url_options['query']['page'] = $i;
       $element = array(
-        'loc' => url('sitemap.xml', $url_options),
+        'loc' => $this->getSitemapUrl('sitemap.xml', array('query' => array('page' => $i))),
         // @todo Use the actual lastmod value of the chunk file.
         'lastmod' => gmdate($lastmod_format, REQUEST_TIME),
       );
       $this->writeSitemapElement('sitemap', $element);
     }
   }
+
 }
 
 /**
@@ -245,7 +334,7 @@ function xmlsitemap_link_frontpage_settings(&$form) {
  */
 function xmlsitemap_xmlsitemap_link_alter(&$link) {
   // Alter the frontpage priority.
-  if ($link['type'] == 'frontpage' || $link['loc'] == '' || $link['loc'] == drupal_get_normal_path(variable_get('site_frontpage', 'node'))) {
+  if ($link['type'] == 'frontpage' || $link['loc'] == '' || $link['loc'] == variable_get('site_frontpage', 'node')) {
     $link['priority'] = variable_get('xmlsitemap_frontpage_priority', 1.0);
     $link['changefreq'] = variable_get('xmlsitemap_frontpage_changefreq', XMLSITEMAP_FREQUENCY_DAILY);
   }
@@ -279,7 +368,7 @@ function xmlsitemap_xmlsitemap_sitemap_operations() {
 /**
  * XML sitemap operation callback; regenerate sitemap files using the batch API.
  *
- * @param $smids
+ * @param array $smids
  *   An array of XML sitemap IDs.
  *
  * @see xmlsitemap_regenerate_batch()
@@ -294,17 +383,12 @@ function xmlsitemap_sitemap_multiple_update(array $smids) {
  * Implements hook_query_TAG_alter().
  */
 function xmlsitemap_query_xmlsitemap_link_bundle_access_alter(QueryAlterableInterface $query) {
-  if ($entity = $query->getMetaData('entity')) {
+  if ($query instanceof EntityFieldQuery && $entity = $query->getMetaData('entity')) {
     $info = $query->getMetaData('entity_info');
     $bundle = $query->getMetaData('bundle');
     if (empty($bundle)) {
       $bundle = xmlsitemap_get_link_type_enabled_bundles($entity);
     }
-    if (!empty($info['bundle keys']['bundle'])) {
-      $query->condition($info['bundle keys']['bundle'], $bundle);
-    }
-    elseif (!empty($info['entity keys']['bundle'])) {
-      $query->condition($info['entity keys']['bundle'], $bundle);
-    }
+    $query->entityCondition('bundle', $bundle, is_array($bundle) ? 'IN' : '=');
   }
 }

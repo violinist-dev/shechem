@@ -1,5 +1,9 @@
 <?php
-// $Id$
+
+/**
+ * @file
+ * Views wizard for managed file views.
+ */
 
 $plugin = array(
   'name' => 'file_managed',
@@ -10,6 +14,12 @@ $plugin = array(
     'class' => 'ViewsUiFileManagedViewsWizard',
   ),
   'title' => t('Files'),
-  'filters' => array(
+  'filters' => array(),
+  'path_field' => array(
+    'id' => 'uri',
+    'table' => 'file_managed',
+    'field' => 'uri',
+    'exclude' => TRUE,
+    'file_download_path' => TRUE,
   ),
 );

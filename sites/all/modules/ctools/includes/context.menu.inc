@@ -13,6 +13,7 @@ function ctools_context_menu(&$items) {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
     'file' => 'includes/context-admin.inc',
+    'theme callback' => 'ajax_base_page_theme',
   );
   $items['ctools/context/ajax/add'] = array(
     'page callback' => 'ctools_context_ajax_item_add',
@@ -24,7 +25,7 @@ function ctools_context_menu(&$items) {
     'page callback' => 'ctools_context_ajax_item_delete',
   ) + $base;
 
-  // For the access system
+  // For the access system.
   $base['file'] = 'includes/context-access-admin.inc';
   $items['ctools/context/ajax/access/add'] = array(
     'page callback' => 'ctools_access_ajax_add',

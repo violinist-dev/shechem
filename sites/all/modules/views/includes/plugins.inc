@@ -1,15 +1,15 @@
 <?php
+
 /**
- * @file plugins.inc
+ * @file
  * Built in plugins for Views output handling.
- *
  */
 
-// @todo: Remove this once update.php can use the registry
+// @todo Remove this once update.php can use the registry.
 views_include('base');
 
 /**
- * Implements hook_views_plugins
+ * Implements hook_views_plugins().
  */
 function views_views_plugins() {
   $js_path = drupal_get_path('module', 'ctools') . '/js';
@@ -40,6 +40,7 @@ function views_views_plugins() {
         'contextual links locations' => array('page'),
         'use ajax' => TRUE,
         'use pager' => TRUE,
+        'use more' => TRUE,
         'accept attachments' => TRUE,
         'admin' => t('Page'),
         'help topic' => 'display-page',
@@ -63,6 +64,7 @@ function views_views_plugins() {
         'help' => t('Attachments added to other displays to achieve multiple views in the same view.'),
         'handler' => 'views_plugin_display_attachment',
         'theme' => 'views_view',
+        'contextual links locations' => array(),
         'use ajax' => TRUE,
         'use pager' => FALSE,
         'use more' => TRUE,
@@ -79,6 +81,29 @@ function views_views_plugins() {
         'accept attachments' => FALSE,
         'admin' => t('Feed'),
         'help topic' => 'display-feed',
+      ),
+      'embed' => array(
+        'title' => t('Embed'),
+        'help' => t('Provide a display which can be embedded using the views api.'),
+        'handler' => 'views_plugin_display_embed',
+        'theme' => 'views_view',
+        'uses hook menu' => FALSE,
+        'use ajax' => TRUE,
+        'use pager' => TRUE,
+        'accept attachments' => FALSE,
+        'admin' => t('Embed'),
+        'no ui' => !variable_get('views_ui_display_embed', FALSE),
+      ),
+    ),
+    'display_extender' => array(
+      // Default settings for all display_extender plugins.
+      'default' => array(
+        'title' => t('Empty display extender'),
+        'help' => t('Default settings for this view.'),
+        'handler' => 'views_plugin_display_extender',
+        // You can force the plugin to be enabled.
+        'enabled' => FALSE,
+        'no ui' => TRUE,
       ),
     ),
     'style' => array(
@@ -111,6 +136,7 @@ function views_views_plugins() {
         'help' => t('Displays rows in a grid.'),
         'handler' => 'views_plugin_style_grid',
         'theme' => 'views_view_grid',
+        'uses fields' => FALSE,
         'uses row plugin' => TRUE,
         'uses row class' => TRUE,
         'uses options' => TRUE,
@@ -134,7 +160,8 @@ function views_views_plugins() {
         'help' => t('Displays the default summary as a list.'),
         'handler' => 'views_plugin_style_summary',
         'theme' => 'views_view_summary',
-        'type' => 'summary', // only shows up as a summary style
+        'type' => 'summary',
+  // only shows up as a summary style.
         'uses options' => TRUE,
         'help topic' => 'style-summary',
       ),
@@ -143,7 +170,8 @@ function views_views_plugins() {
         'help' => t('Displays the summary unformatted, with option for one after another or inline.'),
         'handler' => 'views_plugin_style_summary_unformatted',
         'theme' => 'views_view_summary_unformatted',
-        'type' => 'summary', // only shows up as a summary style
+        'type' => 'summary',
+  // only shows up as a summary style.
         'uses options' => TRUE,
         'help topic' => 'style-summary-unformatted',
       ),
@@ -169,6 +197,16 @@ function views_views_plugins() {
         'type' => 'normal',
         'help topic' => 'style-row-fields',
       ),
+      'rss_fields' => array(
+        'title' => t('Fields'),
+        'help' => t('Display fields as RSS items.'),
+        'handler' => 'views_plugin_row_rss_fields',
+        'theme' => 'views_view_row_rss',
+        'uses fields' => TRUE,
+        'uses options' => TRUE,
+        'type' => 'feed',
+        'help topic' => 'style-row-fields',
+      ),
     ),
     'argument default' => array(
       'parent' => array(
@@ -183,6 +221,10 @@ function views_views_plugins() {
       'php' => array(
         'title' => t('PHP Code'),
         'handler' => 'views_plugin_argument_default_php',
+      ),
+      'raw' => array(
+        'title' => t('Raw value from URL'),
+        'handler' => 'views_plugin_argument_default_raw',
       ),
     ),
     'argument validator' => array(
@@ -226,7 +268,7 @@ function views_views_plugins() {
       'views_query' => array(
         'title' => t('SQL Query'),
         'help' => t('Query will be generated and run using the Drupal database API.'),
-        'handler' => 'views_plugin_query_default'
+        'handler' => 'views_plugin_query_default',
       ),
     ),
     'cache' => array(
@@ -316,7 +358,7 @@ function views_views_plugins() {
         'handler' => 'views_plugin_localization',
         'parent' => '',
       ),
-     'none' => array(
+      'none' => array(
         'title' => t('None'),
         'help' => t('Do not pass admin strings for translation.'),
         'handler' => 'views_plugin_localization_none',
@@ -341,7 +383,8 @@ function views_views_plugins() {
       'help' => t('Puts all of the results into a select box and allows the user to go to a different page based upon the results.'),
       'handler' => 'views_plugin_style_summary_jump_menu',
       'theme' => 'views_view_summary_jump_menu',
-      'type' => 'summary', // only shows up as a summary style
+      'type' => 'summary',
+    // only shows up as a summary style.
       'uses options' => TRUE,
       'help topic' => 'style-summary-jump-menu',
     );
@@ -368,7 +411,7 @@ function views_views_plugins() {
  */
 function views_discover_plugins() {
   $cache = array('display' => array(), 'style' => array(), 'row' => array(), 'argument default' => array(), 'argument validator' => array(), 'access' => array(), 'cache' => array(), 'exposed_form' => array());
-  // Get plugins from all mdoules.
+  // Get plugins from all modules.
   foreach (module_implements('views_plugins') as $module) {
     $function = $module . '_views_plugins';
     $result = $function();
@@ -377,7 +420,7 @@ function views_discover_plugins() {
     }
 
     $module_dir = isset($result['module']) ? $result['module'] : $module;
-    // Setup automatic path/file finding for theme registration
+    // Setup automatic path/file finding for theme registration.
     if ($module_dir == 'views') {
       $theme_path = drupal_get_path('module', $module_dir) . '/theme';
       $theme_file = 'theme.inc';
@@ -409,7 +452,10 @@ function views_discover_plugins() {
         if (!isset($def['parent'])) {
           $def['parent'] = 'parent';
         }
-        // merge the new data in
+        // Set the internal name to be able to read it out later.
+        $def['name'] = $plugin;
+
+        // merge the new data in.
         $cache[$type][$plugin] = $def;
       }
     }
@@ -424,19 +470,30 @@ function views_discover_plugins() {
  * Abstract base class to provide interface common to all plugins.
  */
 class views_plugin extends views_object {
+
   /**
    * The top object of a view.
    *
    * @var view
    */
-  var $view = NULL;
+  public $view = NULL;
 
   /**
-   * The current used display plugin.
+   * The current used views display.
    *
-   * @var views_plugin_display
+   * @var views_display
    */
-  var $display = NULL;
+  public $display = NULL;
+
+  /**
+   * The plugin type of this plugin, for example style or query.
+   */
+  public $plugin_type = NULL;
+
+  /**
+   * The plugin name of this plugin, for example table or full.
+   */
+  public $plugin_name = NULL;
 
   /**
    * Init will be called after construct, when the plugin is attached to a
@@ -446,34 +503,46 @@ class views_plugin extends views_object {
   /**
    * Provide a form to edit options for this plugin.
    */
-  function options_form(&$form, &$form_state) { }
+  public function options_form(&$form, &$form_state) {
+    // Some form elements belong in a fieldset for presentation, but can't
+    // be moved into one because of the form_state['values'] hierarchy. Those
+    // elements can add a #fieldset => 'fieldset_name' property, and they'll
+    // be moved to their fieldset during pre_render.
+    $form['#pre_render'][] = 'views_ui_pre_render_add_fieldset_markup';
+  }
 
   /**
    * Validate the options form.
    */
-  function options_validate(&$form, &$form_state) { }
+  public function options_validate(&$form, &$form_state) {
+  }
 
   /**
    * Handle any special handling on the validate form.
    */
-  function options_submit(&$form, &$form_state) { }
+  public function options_submit(&$form, &$form_state) {
+  }
 
   /**
    * Add anything to the query that we might need to.
    */
-  function query() { }
+  public function query() {
+  }
 
   /**
    * Provide a full list of possible theme templates used by this style.
    */
-  function theme_functions() {
+  public function theme_functions() {
+    if (empty($this->definition['theme'])) {
+      $this->definition['theme'] = 'views_view';
+    }
     return views_theme_functions($this->definition['theme'], $this->view, $this->display);
   }
 
   /**
-   * Provide a list of additional theme functions for the theme information page
+   * Provide a list of additional theme functions for the theme info page.
    */
-  function additional_theme_functions() {
+  public function additional_theme_functions() {
     $funcs = array();
     if (!empty($this->definition['additional themes'])) {
       foreach ($this->definition['additional themes'] as $theme => $type) {
@@ -486,16 +555,18 @@ class views_plugin extends views_object {
   /**
    * Validate that the plugin is correct and can be saved.
    *
-   * @return
+   * @return array
    *   An array of error strings to tell the user what is wrong with this
    *   plugin.
    */
-  function validate() { return array(); }
+  public function validate() {
+    return array();
+  }
 
   /**
    * Returns the summary of the settings in the display.
    */
-  function summary_title() {
+  public function summary_title() {
     return t('Settings');
   }
   /**
@@ -503,10 +574,24 @@ class views_plugin extends views_object {
    *
    * This appears on the ui beside each plugin and beside the settings link.
    */
-  function plugin_title() {
+  public function plugin_title() {
     if (isset($this->definition['short title'])) {
       return check_plain($this->definition['short title']);
     }
     return check_plain($this->definition['title']);
   }
+
+}
+
+/**
+ * Get enabled display extenders.
+ */
+function views_get_enabled_display_extenders() {
+  $enabled = array_filter(variable_get('views_display_extenders', array()));
+  $options = views_fetch_plugin_names('display_extender');
+  foreach ($options as $name => $plugin) {
+    $enabled[$name] = $name;
+  }
+
+  return $enabled;
 }

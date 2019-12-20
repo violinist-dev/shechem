@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ */
+
 if (module_exists('comment')) {
   /**
    * Plugins are described by creating a $plugin array which will be used
@@ -17,16 +21,21 @@ if (module_exists('comment')) {
 
 function ctools_node_form_comment_content_type_render($subtype, $conf, $panel_args, &$context) {
   $block = new stdClass();
-  $block->module = t('node_form');
+  $block->module = 'node_form';
 
   $block->title = t('Comment options');
   $block->delta = 'comment-options';
 
   if (isset($context->form)) {
-    if (!empty($context->form['form_id']) && !empty($context->form['comment_settings']['#access'])) {
-      // remove the fieldset
-      unset($context->form['comment_settings']['#type']);
-      $block->content = drupal_render($context->form['comment_settings']);
+    if (isset($context->form['comment_settings'])) {
+      $block->content['comment_settings'] = $context->form['comment_settings'];
+      unset($block->content['comment_settings']['#pre_render']);
+      unset($block->content['comment_settings']['#theme_wrappers']);
+      $block->content['comment_settings']['#type'] = '';
+
+      // Set access to false on the original rather than removing so that
+      // vertical tabs doesn't clone it. I think this is due to references.
+      $context->form['comment_settings']['#access'] = FALSE;
     }
   }
   else {
@@ -40,6 +49,6 @@ function ctools_node_form_comment_content_type_admin_title($subtype, $conf, $con
 }
 
 function ctools_node_form_comment_content_type_edit_form($form, &$form_state) {
-  // provide a blank form so we have a place to have context setting.
+  // Provide a blank form so we have a place to have context setting.
   return $form;
 }

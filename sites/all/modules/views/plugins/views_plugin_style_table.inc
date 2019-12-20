@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Contains the table style plugin.
+ * Definition of views_plugin_style_table.
  */
 
 /**
@@ -10,24 +11,45 @@
  * @ingroup views_style_plugins
  */
 class views_plugin_style_table extends views_plugin_style {
-  function option_definition() {
+
+  /**
+   * Contains the current active sort column.
+   * @var string
+   */
+  public $active;
+
+  /**
+   * Contains the current active sort order, either desc or asc.
+   * @var string
+   */
+  public $order;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['columns'] = array('default' => array());
+    $options['class'] = array('default' => array());
     $options['default'] = array('default' => '');
     $options['info'] = array('default' => array());
-    $options['override'] = array('default' => TRUE);
-    $options['sticky'] = array('default' => FALSE);
+    $options['override'] = array('default' => TRUE, 'bool' => TRUE);
+    $options['sticky'] = array('default' => FALSE, 'bool' => TRUE);
     $options['order'] = array('default' => 'asc');
-    $options['summary'] = array('default' => '');
+    $options['caption'] = array('default' => '', 'translatable' => TRUE);
+    $options['summary'] = array('default' => '', 'translatable' => TRUE);
+    $options['empty_table'] = array('default' => FALSE, 'bool' => TRUE);
 
     return $options;
   }
 
   /**
-   * Determine if we should provide sorting based upon $_GET inputs.
+   * Determine if we should provide sorting based upon $_GET inputs
+   *
+   * @return bool
    */
-  function build_sort() {
+  public function build_sort() {
     if (!isset($_GET['order']) && ($this->options['default'] == -1 || empty($this->view->field[$this->options['default']]))) {
       return TRUE;
     }
@@ -44,14 +66,19 @@ class views_plugin_style_table extends views_plugin_style {
   /**
    * Add our actual sort criteria
    */
-  function build_sort_post() {
+  public function build_sort_post() {
     if (!isset($_GET['order'])) {
       // check for a 'default' clicksort. If there isn't one, exit gracefully.
       if (empty($this->options['default'])) {
         return;
       }
       $sort = $this->options['default'];
-      $this->order = !empty($this->options['order']) ? $this->options['order'] : 'asc';
+      if (!empty($this->options['info'][$sort]['default_sort_order'])) {
+        $this->order = $this->options['info'][$sort]['default_sort_order'];
+      }
+      else {
+        $this->order = !empty($this->options['order']) ? $this->options['order'] : 'asc';
+      }
     }
     else {
       $sort = $_GET['order'];
@@ -88,21 +115,23 @@ class views_plugin_style_table extends views_plugin_style {
    * - Any fields not currently represented must be added.
    * - Columns must be re-ordered to match the fields.
    *
-   * @param $columns
+   * @param array $columns
    *   An array of all fields; the key is the id of the field and the
    *   value is the id of the column the field should be in.
-   * @param $fields
+   * @param array $fields
    *   The fields to use for the columns. If not provided, they will
    *   be requested from the current display. The running render should
    *   send the fields through, as they may be different than what the
    *   display has listed due to access control or other changes.
+   *
+   * @return array
+   *    An array of all the sanitized columns.
    */
-  function sanitize_columns($columns, $fields = NULL) {
+  public function sanitize_columns($columns, $fields = NULL) {
     $sanitized = array();
     if ($fields === NULL) {
       $fields = $this->display->handler->get_option('fields');
     }
-
     // Preconfigure the sanitized array so that the order is retained.
     foreach ($fields as $field => $info) {
       // Set to itself so that if it isn't touched, it gets column
@@ -132,7 +161,7 @@ class views_plugin_style_table extends views_plugin_style {
   /**
    * Render the given style.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $handlers = $this->display->handler->get_handlers('field');
     if (empty($handlers)) {
@@ -150,24 +179,33 @@ class views_plugin_style_table extends views_plugin_style {
 
     $form['sticky'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Enable Drupal style "sticky" table headers (Javascript)'),
+      '#title' => t('Enable Drupal style "sticky" table headers (JavaScript)'),
       '#default_value' => !empty($this->options['sticky']),
       '#description' => t('(Sticky header effects will not be active for preview below, only on live output.)'),
     );
 
-    $form['order'] = array(
-      '#type' => 'select',
-      '#title' => t('Default sort order'),
-      '#options' => array('asc' => t('Ascending'), 'desc' => t('Descending')),
-      '#default_value' => $this->options['order'],
-      '#description' => t('If a default sort order is selected, what order should it use by default.'),
+    $form['caption'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Short description of table'),
+      '#description' => t('Include a caption for better accessibility of your table.'),
+      '#default_value' => $this->options['caption'],
+      '#maxlength' => 255,
     );
 
     $form['summary'] = array(
       '#type' => 'textfield',
       '#title' => t('Table summary'),
-      '#description' => t('This value will be displayed as table-summary attribute in the html. Set this for better accessiblity of your site.'),
+      '#description' => t('This value will be displayed as table-summary attribute in the html. Use this to give a summary of complex tables.'),
       '#default_value' => $this->options['summary'],
+      '#maxlength' => 255,
+    );
+    
+    $form['class'] = array(
+      '#type' => 'textfield',
+      '#title' => t('CSS classes'),
+      '#description' => t('Add CSS classes to the table; multiple classes may be separated by spaces.'),
+      '#default_value' => $this->options['class'],
+      '#maxlength' => 255,
     );
 
     // Note: views UI registers this theme handler on our behalf. Your module
@@ -176,7 +214,7 @@ class views_plugin_style_table extends views_plugin_style {
 
     $columns = $this->sanitize_columns($this->options['columns']);
 
-    // Create an array of allowed columns from the data we know:
+    // Create an array of allowed columns from the data we know.
     $field_names = $this->display->handler->get_field_labels();
 
     if (isset($this->options['default'])) {
@@ -203,14 +241,12 @@ class views_plugin_style_table extends views_plugin_style {
         $form['info'][$field]['sortable'] = array(
           '#type' => 'checkbox',
           '#default_value' => !empty($this->options['info'][$field]['sortable']),
-          '#process' => array('form_process_checkbox', 'ctools_dependent_process'),
           '#dependency' => array($id => array($field)),
         );
         $form['info'][$field]['default_sort_order'] = array(
           '#type' => 'select',
           '#options' => array('asc' => t('Ascending'), 'desc' => t('Descending')),
           '#default_value' => !empty($this->options['info'][$field]['default_sort_order']) ? $this->options['info'][$field]['default_sort_order'] : 'asc',
-          '#process' => array('ctools_dependent_process'),
           '#dependency_count' => 2,
           '#dependency' => array($id => array($field), 'edit-style-options-info-' . $safe . '-sortable' => array(1)),
         );
@@ -224,7 +260,6 @@ class views_plugin_style_table extends views_plugin_style {
           // because 'radio' doesn't fully support '#id' =(
           '#attributes' => array('id' => $radio_id),
           '#default_value' => $default,
-          '#process' => array('ctools_dependent_process'),
           '#dependency' => array($id => array($field)),
         );
       }
@@ -237,14 +272,17 @@ class views_plugin_style_table extends views_plugin_style {
           'views-align-center' => t('Center'),
           'views-align-right' => t('Right'),
           ),
-        '#process' => array('form_process_select', 'ctools_dependent_process'),
         '#dependency' => array($id => array($field)),
       );
       $form['info'][$field]['separator'] = array(
         '#type' => 'textfield',
         '#size' => 10,
         '#default_value' => isset($this->options['info'][$field]['separator']) ? $this->options['info'][$field]['separator'] : '',
-        '#process' => array('ctools_dependent_process'),
+        '#dependency' => array($id => array($field)),
+      );
+      $form['info'][$field]['empty_column'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => isset($this->options['info'][$field]['empty_column']) ? $this->options['info'][$field]['empty_column'] : FALSE,
         '#dependency' => array($id => array($field)),
       );
 
@@ -263,8 +301,22 @@ class views_plugin_style_table extends views_plugin_style {
       '#default_value' => $default,
     );
 
+    $form['empty_table'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show the empty text in the table'),
+      '#default_value' => $this->options['empty_table'],
+      '#description' => t('Per default the table is hidden for an empty view. With this option it is possible to show an empty table with the text in it.'),
+    );
+
     $form['description_markup'] = array(
       '#markup' => '<div class="description form-item">' . t('Place fields into columns; you may combine multiple fields into the same column. If you do, the separator in the column specified will be used to separate the fields. Check the sortable box to make that column click sortable, and check the default sort radio to determine which column will be sorted by default, if any. You may control column order and field labels in the fields section.') . '</div>',
     );
+  }
+
+  /**
+   *
+   */
+  public function even_empty() {
+    return parent::even_empty() || !empty($this->options['empty_table']);
   }
 }

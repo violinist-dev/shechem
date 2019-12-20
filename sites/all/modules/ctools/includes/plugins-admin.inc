@@ -10,6 +10,7 @@
  *
  * Implementing this
  */
+
 /**
  * Get a plugin configuration form.
  *
@@ -71,18 +72,21 @@ function _ctools_plugin_configure_create_form_info(&$form_info, $plugin_definiti
     'show back' => TRUE,
   );
 
+  $add_form = isset($form_info['add form name']) ? $form_info['add form name'] : 'add form';
+  $edit_form = isset($form_info['edit form name']) ? $form_info['edit form name'] : 'edit form';
+
   // Figure out what the forms should actually be. Since they can be specified
   // in a couple of different ways (in order to support simple declarations for
   // the minimal forms but more complex declarations for powerful wizards).
   if ($op == 'add') {
-    if (!empty($plugin_definition['add form'])) {
-      $info = $plugin_definition['add form'];
+    if (!empty($plugin_definition[$add_form])) {
+      $info = $plugin_definition[$add_form];
     }
   }
   if (!isset($info) || $op == 'edit') {
     // Use the edit form for the add form if add form was completely left off.
-    if (!empty($plugin_definition['edit form'])) {
-      $info = $plugin_definition['edit form'];
+    if (!empty($plugin_definition[$edit_form])) {
+      $info = $plugin_definition[$edit_form];
     }
   }
 
@@ -97,18 +101,23 @@ function _ctools_plugin_configure_create_form_info(&$form_info, $plugin_definiti
     if (empty($plugin_definition['title'])) {
       $title = t('Configure');
     }
-    else if ($op == 'add') {
+    elseif ($op == 'add') {
       $title = t('Configure new !plugin_title', array('!plugin_title' => $plugin_definition['title']));
     }
     else {
       $title = t('Configure !plugin_title', array('!plugin_title' => $plugin_definition['title']));
     }
-    $form_info['order'] = array('form' => $title);
-    $form_info['forms'] = array(
-      'form' => array(
-        'title' => $title,
-        'form id' => $info,
-      ),
+    if (empty($form_info['order'])) {
+      $form_info['order'] = array();
+    }
+    $form_info['order']['form'] = $title;
+
+    if (empty($form_info['forms'])) {
+      $form_info['forms'] = array();
+    }
+    $form_info['forms']['form'] = array(
+      'title' => $title,
+      'form id' => $info,
     );
 
     // Add the default form if one is specified.
@@ -126,9 +135,13 @@ function _ctools_plugin_configure_create_form_info(&$form_info, $plugin_definiti
       $form_info['forms']['form']['wrapper'] = 'ctools_plugins_default_form_wrapper';
     }
   }
-  else if (is_array($info)) {
-    $form_info['order'] = array();
-    $form_info['forms'] = array();
+  elseif (is_array($info)) {
+    if (empty($form_info['order'])) {
+      $form_info['order'] = array();
+    }
+    if (empty($form_info['forms'])) {
+      $form_info['forms'] = array();
+    }
     $count = 0;
     $base = 'step';
     $wrapper = NULL;

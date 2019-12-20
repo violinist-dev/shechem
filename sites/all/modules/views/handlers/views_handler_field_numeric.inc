@@ -1,22 +1,32 @@
 <?php
+
 /**
- * Render a field as a numeric value
+ * @file
+ * Definition of views_handler_field_numeric.
+ */
+
+/**
+ * Render a field as a numeric value.
  *
  * Definition terms:
  * - float: If true this field contains a decimal value. If unset this field
- *          will be assumed to be integer.
+ *   will be assumed to be integer.
  *
  * @ingroup views_field_handlers
  */
 class views_handler_field_numeric extends views_handler_field {
-  function option_definition() {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
-    $options['set_precision'] = array('default' => FALSE);
+    $options['set_precision'] = array('default' => FALSE, 'bool' => TRUE);
     $options['precision'] = array('default' => 0);
     $options['decimal'] = array('default' => '.', 'translatable' => TRUE);
     $options['separator'] = array('default' => ',', 'translatable' => TRUE);
-    $options['format_plural'] = array('default' => FALSE);
+    $options['format_plural'] = array('default' => FALSE, 'bool' => TRUE);
     $options['format_plural_singular'] = array('default' => '1');
     $options['format_plural_plural'] = array('default' => '@count');
     $options['prefix'] = array('default' => '', 'translatable' => TRUE);
@@ -25,7 +35,10 @@ class views_handler_field_numeric extends views_handler_field {
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     if (!empty($this->definition['float'])) {
       $form['set_precision'] = array(
         '#type' => 'checkbox',
@@ -38,7 +51,6 @@ class views_handler_field_numeric extends views_handler_field {
         '#title' => t('Precision'),
         '#default_value' => $this->options['precision'],
         '#description' => t('Specify how many digits to print after the decimal point.'),
-        '#process' => array('ctools_dependent_process'),
         '#dependency' => array('edit-options-set-precision' => array(TRUE)),
         '#size' => 2,
       );
@@ -51,8 +63,15 @@ class views_handler_field_numeric extends views_handler_field {
       );
     }
     $form['separator'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Thousands separator'),
+      '#type' => 'select',
+      '#title' => t('Thousands marker'),
+      '#options' => array(
+        '' => t('- None -'),
+        ',' => t('Comma'),
+        ' ' => t('Space'),
+        '.' => t('Decimal'),
+        '\'' => t('Apostrophe'),
+      ),
       '#default_value' => $this->options['separator'],
       '#description' => t('What single character to use as the thousands separator.'),
       '#size' => 2,
@@ -68,7 +87,6 @@ class views_handler_field_numeric extends views_handler_field {
       '#title' => t('Singular form'),
       '#default_value' => $this->options['format_plural_singular'],
       '#description' => t('Text to use for the singular form.'),
-      '#process' => array('ctools_dependent_process'),
       '#dependency' => array('edit-options-format-plural' => array(TRUE)),
     );
     $form['format_plural_plural'] = array(
@@ -76,7 +94,6 @@ class views_handler_field_numeric extends views_handler_field {
       '#title' => t('Plural form'),
       '#default_value' => $this->options['format_plural_plural'],
       '#description' => t('Text to use for the plural form, @count will be replaced with the value.'),
-      '#process' => array('ctools_dependent_process'),
       '#dependency' => array('edit-options-format-plural' => array(TRUE)),
     );
     $form['prefix'] = array(
@@ -95,24 +112,34 @@ class views_handler_field_numeric extends views_handler_field {
     parent::options_form($form, $form_state);
   }
 
-  function render($values) {
-    $value = $values->{$this->field_alias};
+  /**
+   * {@inheritdoc}
+   */
+  public function render($values) {
+    $value = $this->get_value($values);
+
+    // Output nothing if the value is null.
+    if (is_null($value)) {
+      return '';
+    }
+
+    // Hiding should happen before rounding or adding prefix/suffix.
+    if ($this->options['hide_empty'] && empty($value) && ($value !== 0 || $this->options['empty_zero'])) {
+      return '';
+    }
+
     if (!empty($this->options['set_precision'])) {
       $value = number_format($value, $this->options['precision'], $this->options['decimal'], $this->options['separator']);
     }
     else {
-      $remainder = abs($value) - intval(abs($value));
+      $point_position = strpos($value, '.');
+      $remainder = ($point_position === FALSE) ? '' : substr($value, $point_position + 1);
       $value = $value > 0 ? floor($value) : ceil($value);
       $value = number_format($value, 0, '', $this->options['separator']);
       if ($remainder) {
         // The substr may not be locale safe.
-        $value .= $this->options['decimal'] . substr($remainder, 2);
+        $value .= $this->options['decimal'] . $remainder;
       }
-    }
-
-    // Check to see if hiding should happen before adding prefix and suffix.
-    if ($this->options['hide_empty'] && empty($value) && ($value !== 0 || $this->options['empty_zero'])) {
-      return '';
     }
 
     // Should we format as a plural.
@@ -120,6 +147,9 @@ class views_handler_field_numeric extends views_handler_field {
       $value = format_plural($value, $this->options['format_plural_singular'], $this->options['format_plural_plural']);
     }
 
-    return check_plain($this->options['prefix'] . $value . $this->options['suffix']);
+    return $this->sanitize_value($this->options['prefix'], 'xss')
+      . $this->sanitize_value($value)
+      . $this->sanitize_value($this->options['suffix'], 'xss');
   }
+
 }

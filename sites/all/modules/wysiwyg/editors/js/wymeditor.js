@@ -8,12 +8,26 @@ Drupal.wysiwyg.editor.attach.wymeditor = function (context, params, settings) {
   settings.wymPath = settings.basePath + settings.wymPath;
   // Update activeId on focus.
   settings.postInit = function (instance) {
-    $(instance._doc).focus(function () {
+    $(instance._doc).find('body').focus(function () {
       Drupal.wysiwyg.activeId = params.field;
     });
   };
   // Attach editor.
-  $('#' + params.field).wymeditor(settings);
+  var $field = this.$field;
+  $field.wymeditor(settings);
+  var wymInstance = WYMeditor.INSTANCES[$field.data('wym_index')];
+  var wysiwygInstance = this;
+  $(wymInstance._box.find('.wym_iframe iframe').get(0)).bind('load', function () {
+    var $body = $('body', this.contentDocument);
+    var originaltContent = $body.html();
+    $body.bind('keyup paste mouseup', function () {
+      var currentContent = $body.html();
+      if (currentContent != originaltContent) {
+        originaltContent = currentContent;
+        wysiwygInstance.contentsChanged();
+      }
+    });
+  });
 };
 
 /**
@@ -26,11 +40,17 @@ Drupal.wysiwyg.editor.detach.wymeditor = function (context, params, trigger) {
     return;
   }
   var instance = WYMeditor.INSTANCES[index];
+  var i;
   instance.update();
   if (trigger != 'serialize') {
     $(instance._box).remove();
     $(instance._element).show();
-    delete WYMeditor.INSTANCES[index];
+    $field.removeData(WYMeditor.WYM_INDEX);
+    WYMeditor.INSTANCES.splice(index, 1);
+    // Reindex the editors to maintain internal state..
+    for (i = 0; i < WYMeditor.INSTANCES.length; i++) {
+      WYMeditor.INSTANCES[i]._index = i;
+    }
     $field.show();
   }
 };

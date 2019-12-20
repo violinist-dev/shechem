@@ -1,11 +1,23 @@
 <?php
 
 /**
- * Display node comment status
+ * @file
+ * Definition of views_handler_field_node_comment.
+ */
+
+/**
+ * Display node comment status.
+ *
+ * @ingroup views_field_handlers
  */
 class views_handler_field_node_comment extends views_handler_field {
-  function render($values) {
-    switch ($values->{$this->field_alias}) {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function render($values) {
+    $value = $this->get_value($values);
+    switch ($value) {
       case COMMENT_NODE_HIDDEN:
       default:
         return t('Hidden');
@@ -15,4 +27,5 @@ class views_handler_field_node_comment extends views_handler_field {
         return t('Open');
     }
   }
+
 }

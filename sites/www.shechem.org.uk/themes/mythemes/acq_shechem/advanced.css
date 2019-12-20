@@ -61,10 +61,6 @@
   margin: 0;
 }
 
-.rotating-banner, h1, h2, h3, h5, h6, p, li, dt, dd, blockquote, label, th, td, .field, .field h4 {
-  text-shadow: #DDD 1px 1px 4px;
-}
-
 .field h4.float-left {
   margin-bottom: 1em;
   font-weight: normal;
@@ -73,10 +69,6 @@
 
 h5 {
   font-size: 1.1em;
-}
-
-ul.menu li {
-  text-shadow: none;
 }
 
 #block-block-33 {
@@ -246,7 +238,6 @@ a.resource-link {
 .field-name-field-tags .field-item {
   display: inline;
   color: #cccccc;
-  text-shadow: none;
   margin-right: 1em;
   font-size: 0.75em;
 }

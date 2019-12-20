@@ -50,14 +50,6 @@ h5 a:hover {
 
 /* @group Headings */
 
-h1,
-h2,
-h3,
-h4,
-h5 {
-  text-shadow:1px 1px 1px #DEDEDE;
-}
-
 /* @end */
 
 /* @group Forms */

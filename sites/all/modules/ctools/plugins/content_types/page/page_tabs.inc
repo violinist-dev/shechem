@@ -30,11 +30,30 @@ $plugin = array(
  */
 function ctools_page_tabs_content_type_render($subtype, $conf, $panel_args) {
   $block = new stdClass();
-  $block->content = theme('menu_local_tasks');
+  $menus = menu_local_tabs();
+
+  if (empty($menus['#secondary']) && empty($menus['#primary'])) {
+    return;
+  }
+
+  switch ($conf['type']) {
+    case 'primary':
+      unset($menus['#secondary']);
+      break;
+
+    case 'secondary':
+      unset($menus['#primary']);
+      break;
+  }
+  if ($conf['id']) {
+    $menus['#theme_wrappers'][] = 'container';
+    $menus['#attributes']['id'] = $conf['id'];
+  }
+
+  $block->content = $menus;
 
   return $block;
 }
-
 
 function ctools_page_tabs_content_type_edit_form($form, &$form_state) {
   $conf = $form_state['conf'];

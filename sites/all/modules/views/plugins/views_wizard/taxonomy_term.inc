@@ -1,5 +1,9 @@
 <?php
-// $Id$
+
+/**
+ * @file
+ * Views wizard for taxonomy term views.
+ */
 
 if (module_exists('taxonomy')) {
   $plugin = array(
@@ -10,7 +14,16 @@ if (module_exists('taxonomy')) {
       'class' => 'ViewsUiTaxonomyTermViewsWizard',
     ),
     'title' => t('Taxonomy terms'),
-    'filters' => array(
+    'filters' => array(),
+    'path_field' => array(
+      'id' => 'tid',
+      'table' => 'taxonomy_term_data',
+      'field' => 'tid',
+      'exclude' => TRUE,
+      'alter' => array(
+        'alter_text' => 1,
+        'text' => 'taxonomy/term/[tid]',
+      ),
     ),
   );
 }

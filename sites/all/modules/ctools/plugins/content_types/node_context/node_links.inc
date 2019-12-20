@@ -1,9 +1,11 @@
 <?php
 
 /**
+ * @file
  * Plugins are described by creating a $plugin array which will be used
  * by the system that includes this file.
  */
+
 $plugin = array(
   'single' => TRUE,
   'title' => t('Node links'),
@@ -29,10 +31,10 @@ function ctools_node_links_content_type_render($subtype, $conf, $panel_args, $co
     return;
   }
 
-  $node = isset($context->data) ? clone($context->data) : NULL;
+  $node = isset($context->data) ? clone $context->data : NULL;
   $block = new stdClass();
   $block->module = 'node';
-  $block->delta  = $node->nid;
+  $block->delta = $node->nid;
 
   if (empty($node)) {
     $block->delta   = 'placeholder';
@@ -86,7 +88,7 @@ function ctools_node_links_content_type_edit_form($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => $conf['identifier'],
     '#title' => t('Identifier'),
-    '#description' => t('Whatever is placed here will appear in $node->panel_identifier to help theme node links displayed on the panel'),
+    '#description' => t('Whatever is placed here will appear in @identifier, to help theme node links displayed on the panel', array('@identifier' => $node->panel_identifier)),
   );
 
   return $form;
@@ -102,4 +104,3 @@ function ctools_node_links_content_type_edit_form_submit($form, &$form_state) {
 function ctools_node_links_content_type_admin_title($subtype, $conf, $context) {
   return t('"@s" links', array('@s' => $context->identifier));
 }
-

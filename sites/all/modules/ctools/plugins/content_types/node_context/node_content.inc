@@ -1,9 +1,11 @@
 <?php
 
 /**
+ * @file
  * Plugins are described by creating a $plugin array which will be used
  * by the system that includes this file.
  */
+
 $plugin = array(
   'single' => TRUE,
   'title' => t('Node content'),
@@ -27,23 +29,23 @@ $plugin = array(
  * Render the node content.
  */
 function ctools_node_content_content_type_render($subtype, $conf, $panel_args, $context) {
-  if (!empty($context) && empty($context->data)) {
+  if (!empty($context) && (empty($context->data) || empty($context->data->nid))) {
     return;
   }
 
-  $node = isset($context->data) ? clone($context->data) : NULL;
+  $node = isset($context->data) ? clone $context->data : NULL;
   $block = new stdClass();
   $block->module = 'node';
-  $block->delta  = $node->nid;
+  $block->delta = $node->nid;
 
   if (empty($node)) {
     $block->delta   = 'placeholder';
-    $block->title = t('Node title.');
+    $block->title   = t('Node title.');
     $block->content = t('Node content goes here.');
   }
   else {
     if (!empty($conf['identifier'])) {
-      $node->panel_identifier = $conf['identifier'];
+      $node->ctools_template_identifier = $conf['identifier'];
     }
 
     $block->title = $node->title;
@@ -86,7 +88,7 @@ function ctools_node_content_render_node($node, $conf) {
       $links['node-readmore'] = array(
         'title' => t('Read more'),
         'href' => 'node/' . $node->nid,
-        'attributes' => array('rel' => 'tag', 'title' => strip_tags($node->title))
+        'attributes' => array('rel' => 'tag', 'title' => strip_tags($node->title)),
       );
     }
 
@@ -98,8 +100,9 @@ function ctools_node_content_render_node($node, $conf) {
 
     if (empty($conf['no_extras'])) {
       // Allow modules to make their own additions to the node.
-      module_invoke_all('node_view', $node, $conf['build_mode']);
-      module_invoke_all('entity_view', $node, 'node', $conf['build_mode']);
+      $langcode = $GLOBALS['language_content']->language;
+      module_invoke_all('node_view', $node, $conf['build_mode'], $langcode);
+      module_invoke_all('entity_view', $node, 'node', $conf['build_mode'], $langcode);
     }
   }
 
@@ -170,7 +173,7 @@ function ctools_node_content_content_type_edit_form($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => $conf['identifier'],
     '#title' => t('Template identifier'),
-    '#description' => t('This identifier will be added as a template suggestion to display this node: node-panel-IDENTIFIER.tpl.php. Please see the Drupal theming guide for information about template suggestions.'),
+    '#description' => t('This identifier will be added as a template suggestion to display this node: node--panel--IDENTIFIER.tpl.php. Please see the Drupal theming guide for information about template suggestions.'),
   );
 
   $entity = entity_get_info('node');
@@ -200,4 +203,3 @@ function ctools_node_content_content_type_edit_form_submit($form, &$form_state) 
 function ctools_node_content_content_type_admin_title($subtype, $conf, $context) {
   return t('"@s" content', array('@s' => $context->identifier));
 }
-

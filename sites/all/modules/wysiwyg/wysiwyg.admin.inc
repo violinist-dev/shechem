@@ -66,6 +66,14 @@ function wysiwyg_profile_form($form, &$form_state, $profile) {
     ),
   );
 
+  if (!empty($editor['deprecation message'])) {
+    $form['basic']['info']['deprecated'] = array(
+      '#prefix' => '<div class="messages warning">',
+      '#markup' => $editor['deprecation message'],
+      '#suffix' => '</div>',
+    );
+  }
+
   $version_verified = $editor['installed version verified'];
   $migrate_message = '';
   $migrate_status = 'status';
@@ -89,10 +97,10 @@ function wysiwyg_profile_form($form, &$form_state, $profile) {
       // If the editor integration supports migration between versions, attempt
       // it before widgets for settings are rendered.
       if (isset($editor['migrate settings callback']) && function_exists($editor['migrate settings callback'])) {
-        // Get the version migrated to. MUST be in the verified version range or
-        // FALSE if no migration was possible.
+        // Get the version migrated to. MUST be in the verified version range,
+        // FALSE if no migration was possible, or TRUE if no change needed.
         $migrated_version = $editor['migrate settings callback']($settings, $editor, $profile_version, $installed_version);
-        $profile->changed = ($migrated_version !== TRUE && $migrated_version != $installed_version);
+        $profile->changed = ($migrated_version !== TRUE && $migrated_version != $profile_version);
         if ($migrated_version === FALSE) {
           $migrate_message .= ' ' . t('Wysiwyg is not able to automatically adapt the profile to the installed editor version. It is recommended to start over with a new profile.');
           $migrate_status = 'error';
@@ -543,7 +551,7 @@ function wysiwyg_profile_overview($form, &$form_state) {
       'description' => (isset($editor['error']) ? $editor['error'] : ''),
     );
     if (isset($editor['error'])) {
-      $severity = REQUIREMENT_ERROR;
+      $status[$name]['severity'] = REQUIREMENT_ERROR;
     }
     elseif ($editor['installed']) {
       $editor_options[$name] = check_plain($editor['title']) . ' ' . check_plain($editor['installed version']);
@@ -568,7 +576,7 @@ function wysiwyg_profile_overview($form, &$form_state) {
 
       // Add any install notes.
       if (!empty($editor['install note callback']) && function_exists($editor['install note callback'])) {
-        $instructions .= '<div class="editor-install-note">' . $editor['install note callback']() . '</div>';
+        $instructions .= '<div class="editor-install-note">' . $editor['install note callback']($editor) . '</div>';
       }
 
       $status[$name]['description'] .= $instructions;
@@ -590,7 +598,10 @@ function wysiwyg_profile_overview($form, &$form_state) {
     '#title' => t('Installation instructions'),
     '#collapsible' => TRUE,
     '#collapsed' => !isset($show_instructions),
-    '#description' => t('A complete list of <a href="@url">supported editor versions</a> for all Wysiwyg module versions can be found on drupal.org.', array('@url' => url('https://www.drupal.org/node/596966'))) . (!$count ? ' ' . t('There are no editor libraries installed currently. The following list contains a list of currently supported editors:') : ''),
+    '#description' => t('A complete list of <a href="@url">supported editor versions</a> for all Wysiwyg module versions can be found on drupal.org.', array('@url' => url('https://www.drupal.org/node/596966')))
+    . (!$count ? ' ' . t('There are no editor libraries installed currently. The following list contains a list of currently supported editors:') : '')
+    . '<br>' . t('The instructions apply to the latest supported editor version. Paths for previous versions may differ.')
+    . '<br>' . t('In general: Unpack the downloaded library archive directly into the libraries folder. You may need to rename the top folder to exactly match the plain library name.'),
     '#weight' => 10,
   );
   $form['status']['report'] = array('#markup' => theme('status_report', array('requirements' => $status)));
@@ -631,6 +642,9 @@ function wysiwyg_profile_overview($form, &$form_state) {
       }
       else {
         $editor_message = '<div class="messages error">' . t('Unable to find @library. Expected version: %profile_version. Reinstall the library to edit this profile.', array('@library' => $editors[$editor_name]['title'], '%profile_version' => $profile_version)) . '</div>';
+      }
+      if (!empty($editors[$editor_name]['deprecation message'])) {
+        $editor_message .= '<div class="messages warning">' . $editors[$editor_name]['deprecation message'] . '</div>';
       }
       $form['formats'][$id]['editor']['#markup'] = $editor_message;
       if ($editors[$profile->editor]['installed']) {

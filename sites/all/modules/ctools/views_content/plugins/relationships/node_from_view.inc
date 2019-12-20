@@ -15,8 +15,8 @@ $plugin = array(
   'description' => t('Extract a node context from a view context of the base type node.'),
   'required context' => new ctools_context_required(t('View'), 'view', array('base' => 'node')),
   'context' => 'views_content_node_from_view_context',
-  'settings form' => 'views_content_node_from_view_settings_form',
-  'settings form validate' => 'views_content_node_from_view_settings_form_validate',
+  'edit form' => 'views_content_node_from_view_settings_form',
+  'edit form validate' => 'views_content_node_from_view_settings_form_validate',
   'defaults' => array('row' => 1),
 );
 
@@ -33,7 +33,7 @@ function views_content_node_from_view_context($context, $conf, $placeholder = FA
   views_content_context_get_output($context);
 
   $row = intval($conf['row']) - 1;
-  if (isset($view->result[$row])) {
+  if (isset($view->result[$row]) && isset($view->base_field) && isset($view->result[$row]->{$view->base_field})) {
     $nid = $view->result[$row]->{$view->base_field};
     if ($nid) {
       $node = node_load($nid);
