@@ -1,5 +1,4 @@
 <?php
-// $Id: export.inc,v 1.32 2011/02/16 20:31:52 merlinofchaos Exp $
 
 /**
  * @file

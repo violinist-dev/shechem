@@ -1,5 +1,4 @@
 <?php
-// $Id: plugins.inc,v 1.36 2011/02/18 19:39:28 merlinofchaos Exp $
 
 /**
  * @file

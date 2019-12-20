@@ -1,5 +1,4 @@
 <?php
-// $Id: ctools_export_ui.class.php,v 1.6 2011/02/18 15:49:30 merlinofchaos Exp $
 
 /**
  * Base class for export UI.
