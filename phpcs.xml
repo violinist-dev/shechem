@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<ruleset name="Compatibility">
+    <description>Checks PHP compatibility</description>
+
+    <config name="testVersion" value="7.3"/>
+    <config name="php_version" value="70300"/>
+    <arg name="extensions" value="php,module,inc,install,profile,theme"/>
+
+    <arg name="colors"/>
+    <arg value="np"/>
+
+    <!-- All exclude patterns are designed to work whether phpcs is invoked from -->
+    <!-- the profile directory (devs) or the drupal root (Jenkins). -->
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*.api.php</exclude-pattern>
+    <exclude-pattern>report/*</exclude-pattern>
+
+    <rule ref="PHPCompatibility"/>
+    <!-- False positive in common.inc - there is no /e modifier in use. -->
+    <rule ref="PHPCompatibility.PHP.PregReplaceEModifier.Found">
+        <exclude-pattern>includes/common.inc</exclude-pattern>
+    </rule>
+    <!-- This Migrate plugin expressly checks for the existence of the extension, it's fine. -->
+    <rule ref="PHPCompatibility.PHP.RemovedExtensions.mysql_DeprecatedRemoved">
+      <exclude-pattern>sites/all/modules/htmlpurifier/htmlpurifier.install</exclude-pattern>
+    </rule>
+    <!-- E.g. ini_set('magic_quotes_runtime') does not break anything, and is kept in core
+         in e.g. bootstrap.inc for backwards-compatibility reasons. -->
+    <rule ref="PHPCompatibility.PHP.DeprecatedIniDirectives.magic_quotes_runtimeDeprecatedRemoved">
+        <type>warning</type>
+    </rule>
+    <rule ref="PHPCompatibility.PHP.DeprecatedFunctions.set_magic_quotes_runtimeDeprecatedRemoved">
+        <type>warning</type>
+    </rule>
+    <!-- Do not add exclusions for custom code. It is better to exclude specific lines via:
+         // @codingStandardsIgnoreStart
+         ...
+         // @codingStandardsIgnoreEnd -->
+
+    <!-- Add syntax checking -->
+    <rule ref="Generic.PHP.Syntax"/>
+</ruleset>
