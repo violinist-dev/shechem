@@ -41,6 +41,7 @@ settings:
             - JustifyCenter
             - JustifyRight
             - Format
+            - Styles
         -
           name: Tools
           items:
