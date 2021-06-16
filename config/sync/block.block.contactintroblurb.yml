@@ -1,0 +1,30 @@
+uuid: f52a2588-0765-4f7f-a373-becaf8dc5e4b
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:basic:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+  module:
+    - block_content
+    - system
+  theme:
+    - bartik
+id: contactintroblurb
+theme: bartik
+region: content
+weight: 0
+provider: null
+plugin: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+settings:
+  id: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+  label: 'Contact intro blurb'
+  provider: block_content
+  label_display: '0'
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    pages: "/contact/*\r\n/contact"
+    negate: false
