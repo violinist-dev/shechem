@@ -5,10 +5,10 @@ dependencies: {  }
 _core:
   default_config_hash: vymHlgJy26BuI5GGj9-IXjwR3dRC5C0tij4BpWJnoqw
 id: feedback
-label: 'Website feedback'
+label: Contact
 recipients:
-  - james.williams@computerminds.co.uk
+  - shechem.community@gmail.com
 reply: ''
 weight: 0
-message: 'Your message has been sent.'
+message: 'Thank you for contacting us through the Shechem community website. We will endeavour to respond to you soon. '
 redirect: ''

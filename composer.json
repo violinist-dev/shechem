@@ -21,6 +21,7 @@
         "drupal/core-composer-scaffold": "^9.1",
         "drupal/core-project-message": "^9.1",
         "drupal/core-recommended": "^9.1",
+        "drupal/entity_extra_field": "^2@alpha",
         "drupal/pathauto": "^1.8",
         "drush/drush": "~10.3",
         "oomphinc/composer-installers-extender": "^2.0",
