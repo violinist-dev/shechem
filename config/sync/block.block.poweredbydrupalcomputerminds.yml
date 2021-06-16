@@ -1,0 +1,25 @@
+uuid: f17c54ee-9f0d-4a33-b1de-1d40fc5fe362
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:basic:718cc203-c16c-47aa-a33b-e16a71d58f28'
+  module:
+    - block_content
+  theme:
+    - bartik
+id: poweredbydrupalcomputerminds
+theme: bartik
+region: footer_fifth
+weight: 0
+provider: null
+plugin: 'block_content:718cc203-c16c-47aa-a33b-e16a71d58f28'
+settings:
+  id: 'block_content:718cc203-c16c-47aa-a33b-e16a71d58f28'
+  label: 'Powered by Drupal + ComputerMinds'
+  provider: block_content
+  label_display: '0'
+  status: true
+  info: ''
+  view_mode: full
+visibility: {  }

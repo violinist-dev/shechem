@@ -1,0 +1,14 @@
+uuid: e6858074-1935-4cbc-aa94-a39b0125abc0
+name: Shechem
+mail: james.williams@computerminds.co.uk
+slogan: ''
+page:
+  403: ''
+  404: ''
+  front: /node/1
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
+default_langcode: en
+_core:
+  default_config_hash: yTxtFqBHnEWxQswuWvkjE8mKw2t8oKuCL1q8KnfHuGE

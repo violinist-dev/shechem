@@ -1,0 +1,14 @@
+uuid: efdb8a01-b880-4e45-8e76-6a3c1ac2b6fd
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: generic_content
+label: 'Generic content'
+type: 'canonical_entities:node'
+pattern: 'content/[node:title]'
+selection_criteria: {  }
+selection_logic: and
+weight: 0
+relationships: {  }
