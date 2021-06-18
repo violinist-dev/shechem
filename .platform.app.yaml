@@ -150,10 +150,11 @@ web:
                 # Provide a longer TTL (2 weeks) for aggregated CSS and JS files.
                 '^/sites/default/files/(css|js)':
                     expires: 2w
+
 crons:
-    # Run Drupal's cron tasks every hour at 19 minutes past on the production branch only.
+    # Run Drupal's cron tasks every 3 hours.
     drupal:
-        spec: '19 * * * *'
+        spec: '0 */3 * * *'
         cmd: |
           if [ "$PLATFORM_BRANCH" = production ]; then
               cd web; drush core-cron

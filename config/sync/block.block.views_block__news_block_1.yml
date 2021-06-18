@@ -1,0 +1,24 @@
+uuid: 4fc3201a-59ec-4a4a-af1f-762351d92a68
+langcode: en
+status: true
+dependencies:
+  config:
+    - views.view.news
+  module:
+    - views
+  theme:
+    - bartik
+id: views_block__news_block_1
+theme: bartik
+region: sidebar_first
+weight: 0
+provider: null
+plugin: 'views_block:news-block_1'
+settings:
+  id: 'views_block:news-block_1'
+  label: ''
+  provider: views
+  label_display: visible
+  views_label: ''
+  items_per_page: none
+visibility: {  }
