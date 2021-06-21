@@ -3,6 +3,15 @@ body {
   font-size: 100%;
 }
 
+.site-footer,
+.site-branding__slogan,
+#header {
+  font-family: inherit;
+}
+.region-primary-menu .block-menu .menu {
+  font-size: inherit;
+}
+
 .align-right {
   margin-left: 1rem;
 }
