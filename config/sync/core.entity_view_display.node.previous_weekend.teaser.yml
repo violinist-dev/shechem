@@ -1,0 +1,30 @@
+uuid: ae0ccf90-99b8-45ac-bd8e-0c21a23b7fcc
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.previous_weekend.body
+    - node.type.previous_weekend
+  module:
+    - text
+    - user
+id: node.previous_weekend.teaser
+targetEntityType: node
+bundle: previous_weekend
+mode: teaser
+content:
+  body:
+    label: hidden
+    type: text_summary_or_trimmed
+    weight: 0
+    settings:
+      trim_length: 600
+    third_party_settings: {  }
+    region: content
+  links:
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }

@@ -1,0 +1,18 @@
+uuid: bc662767-ad89-4ea8-a409-4c9506329283
+langcode: en
+status: true
+dependencies:
+  module:
+    - menu_ui
+third_party_settings:
+  menu_ui:
+    available_menus:
+      - main
+    parent: 'main:'
+name: 'Previous weekend'
+type: previous_weekend
+description: 'Details of a previous Shechem weekend.'
+help: 'To order the weekend correctly on the previous weekends page, change the authoring information below to a date in the year that the weekend was held. '
+new_revision: true
+preview_mode: 1
+display_submitted: false

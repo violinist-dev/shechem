@@ -1,0 +1,28 @@
+uuid: fd71179f-2648-4714-9392-e3000d7e9dba
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.previous_weekend.body
+    - node.type.previous_weekend
+  module:
+    - text
+    - user
+id: node.previous_weekend.default
+targetEntityType: node
+bundle: previous_weekend
+mode: default
+content:
+  body:
+    label: hidden
+    type: text_default
+    weight: 101
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+  links:
+    weight: 100
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+hidden: {  }

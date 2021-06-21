@@ -21,6 +21,7 @@
         "drupal/core-composer-scaffold": "^9.2",
         "drupal/core-recommended": "^9.2",
         "drupal/pathauto": "^1.8",
+        "drupal/redirect": "^1.6",
         "drush/drush": "~10.3",
         "oomphinc/composer-installers-extender": "^2.0",
         "platformsh/config-reader": "^2.4"
