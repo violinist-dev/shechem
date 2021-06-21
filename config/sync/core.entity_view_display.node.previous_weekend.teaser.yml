@@ -5,6 +5,9 @@ dependencies:
   config:
     - core.entity_view_mode.node.teaser
     - field.field.node.previous_weekend.body
+    - field.field.node.previous_weekend.field_date
+    - field.field.node.previous_weekend.field_event_type
+    - field.field.node.previous_weekend.field_location
     - node.type.previous_weekend
   module:
     - text
@@ -22,9 +25,19 @@ content:
       trim_length: 600
     third_party_settings: {  }
     region: content
-  links:
+  field_event_type:
+    type: entity_reference_label
     weight: 1
+    region: content
+    label: hidden
+    settings:
+      link: false
+    third_party_settings: {  }
+  links:
+    weight: 2
     region: content
     settings: {  }
     third_party_settings: {  }
-hidden: {  }
+hidden:
+  field_date: true
+  field_location: true

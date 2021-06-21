@@ -1,0 +1,29 @@
+uuid: 7b59a4a2-6cd1-4292-b7fc-c9ed10300377
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_event_type
+    - node.type.previous_weekend
+    - taxonomy.vocabulary.event_type
+id: node.previous_weekend.field_event_type
+field_name: field_event_type
+entity_type: node
+bundle: previous_weekend
+label: 'Event type'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      event_type: event_type
+    sort:
+      field: name
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

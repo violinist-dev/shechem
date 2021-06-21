@@ -9,10 +9,10 @@ third_party_settings:
     available_menus:
       - main
     parent: 'main:'
-name: 'Previous weekend'
+name: Event
 type: previous_weekend
-description: 'Details of a previous Shechem weekend.'
-help: 'To order the weekend correctly on the previous weekends page, change the authoring information below to a date in the year that the weekend was held. '
+description: 'Information about national days, regional meetings and previous Shechem weekends.'
+help: 'To order the event correctly on the events listing, change the authoring information below to the approximate date that it was held. '
 new_revision: true
 preview_mode: 1
 display_submitted: false

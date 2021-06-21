@@ -10,8 +10,8 @@ dependencies:
     - bartik
 id: poweredbydrupalcomputerminds
 theme: bartik
-region: footer_fifth
-weight: 0
+region: footer_first
+weight: -7
 provider: null
 plugin: 'block_content:718cc203-c16c-47aa-a33b-e16a71d58f28'
 settings:

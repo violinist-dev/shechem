@@ -4,6 +4,9 @@ status: true
 dependencies:
   config:
     - field.field.node.previous_weekend.body
+    - field.field.node.previous_weekend.field_date
+    - field.field.node.previous_weekend.field_event_type
+    - field.field.node.previous_weekend.field_location
     - node.type.previous_weekend
   module:
     - text
@@ -16,13 +19,33 @@ content:
   body:
     label: hidden
     type: text_default
-    weight: 101
+    weight: 3
     settings: {  }
     third_party_settings: {  }
     region: content
-  links:
-    weight: 100
-    settings: {  }
+  field_date:
+    weight: 1
+    label: inline
+    settings:
+      link_to_entity: false
     third_party_settings: {  }
+    type: string
     region: content
-hidden: {  }
+  field_event_type:
+    weight: 2
+    label: inline
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_location:
+    weight: 0
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  links: true

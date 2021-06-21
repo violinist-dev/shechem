@@ -1,0 +1,30 @@
+uuid: 675e0c62-a83d-4607-b622-df2deccea32a
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:basic:c21d292f-1334-4ffa-bf17-83508a0a203e'
+  module:
+    - block_content
+    - system
+  theme:
+    - bartik
+id: eventsintro
+theme: bartik
+region: content
+weight: 0
+provider: null
+plugin: 'block_content:c21d292f-1334-4ffa-bf17-83508a0a203e'
+settings:
+  id: 'block_content:c21d292f-1334-4ffa-bf17-83508a0a203e'
+  label: 'Events intro'
+  provider: block_content
+  label_display: '0'
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    pages: /events
+    negate: false

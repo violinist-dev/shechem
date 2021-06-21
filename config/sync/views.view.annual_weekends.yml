@@ -49,12 +49,17 @@ display:
           sort_asc_label: Asc
           sort_desc_label: Desc
       pager:
-        type: mini
+        type: full
         options:
-          items_per_page: 20
+          items_per_page: 10
           offset: 0
           id: 0
           total_pages: null
+          tags:
+            previous: ‹‹
+            next: ››
+            first: '« First'
+            last: 'Last »'
           expose:
             items_per_page: false
             items_per_page_label: 'Items per page'
@@ -63,9 +68,7 @@ display:
             items_per_page_options_all_label: '- All -'
             offset: false
             offset_label: Offset
-          tags:
-            previous: ‹‹
-            next: ››
+          quantity: 9
       style:
         type: default
       row:
@@ -192,21 +195,8 @@ display:
           expose:
             label: ''
           granularity: second
-      title: 'Annual weekends'
-      header:
-        area:
-          id: area
-          table: views
-          field: area
-          relationship: none
-          group_type: group
-          admin_label: ''
-          empty: false
-          tokenize: false
-          content:
-            value: '<p>You may be surprised to realise that Shechem is over ten years old. Read the reviews of the last few annual weekends here. Look back on what we did, laugh at some of the pictures, and remind yourself of what we learnt.</p>'
-            format: basic_html
-          plugin_id: text
+      title: Events
+      header: {  }
       footer: {  }
       empty: {  }
       relationships: {  }
@@ -228,10 +218,10 @@ display:
     position: 1
     display_options:
       display_extenders: {  }
-      path: previous-weekends
+      path: events
       menu:
         type: normal
-        title: 'Annual weekends'
+        title: Events
         description: ''
         expanded: false
         parent: ''
