@@ -63,9 +63,9 @@ display:
           slideshow_type: views_slideshow_cycle
           views_slideshow_cycle:
             effect: fade
-            transition_advanced: 0
-            timeout: '5000'
-            speed: '700'
+            transition_advanced: 1
+            timeout: '3000'
+            speed: '600'
             delay: '0'
             sync: 1
             random: 0

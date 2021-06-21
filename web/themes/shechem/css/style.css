@@ -32,3 +32,8 @@ blockquote {
   border-color: #572c15;
   border-width: 5px;
 }
+
+.views_slideshow_cycle_teaser_section {
+  margin: 0 auto;
+  text-align: center;
+}
