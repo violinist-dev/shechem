@@ -1,0 +1,28 @@
+uuid: fd73a9b9-89fc-409d-bf1a-4a563859ed47
+langcode: en
+status: true
+dependencies:
+  module:
+    - search
+    - system
+  theme:
+    - shechem
+_core:
+  default_config_hash: Q-4EcGAsu26ICu4ejEz0uE1zv4akpiaOsizxgZfAmEw
+id: shechem_search
+theme: shechem
+region: header
+weight: -4
+provider: null
+plugin: search_form_block
+settings:
+  id: search_form_block
+  label: Search
+  provider: search
+  label_display: visible
+  page_id: node_search
+visibility:
+  request_path:
+    id: request_path
+    pages: '*'
+    negate: false

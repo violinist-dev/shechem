@@ -1,0 +1,20 @@
+uuid: 7dd301a5-a2c4-465d-9314-e383f8e3b2c6
+langcode: en
+status: true
+dependencies:
+  theme:
+    - shechem
+_core:
+  default_config_hash: 13GQpeITIJsp1kyPniXtWZfyFH87vb1xxJCHifL4UeE
+id: shechem_local_actions
+theme: shechem
+region: content
+weight: -3
+provider: null
+plugin: local_actions_block
+settings:
+  id: local_actions_block
+  label: 'Primary admin actions'
+  provider: core
+  label_display: '0'
+visibility: {  }

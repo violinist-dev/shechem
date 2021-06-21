@@ -1,0 +1,30 @@
+uuid: 91fdb021-c6b2-4dda-8750-29de9ab9b1c1
+langcode: en
+status: true
+dependencies:
+  content:
+    - 'block_content:basic:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+  module:
+    - block_content
+    - system
+  theme:
+    - shechem
+id: shechem_contactintroblurb
+theme: shechem
+region: content
+weight: -2
+provider: null
+plugin: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+settings:
+  id: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
+  label: 'Contact intro blurb'
+  provider: block_content
+  label_display: '0'
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    pages: "/contact/*\r\n/contact"
+    negate: false

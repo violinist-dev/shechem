@@ -1,0 +1,29 @@
+uuid: f504f8af-8c97-4718-a34e-47aaaaafd738
+langcode: en
+status: true
+dependencies:
+  config:
+    - system.menu.main
+  module:
+    - system
+  theme:
+    - shechem
+id: shechem_mainnavigation_2
+theme: shechem
+region: sidebar_first
+weight: -6
+provider: null
+plugin: 'system_menu_block:main'
+settings:
+  id: 'system_menu_block:main'
+  label: 'What is Shechem?'
+  provider: system
+  label_display: visible
+  level: 2
+  depth: 2
+  expand_all_items: false
+visibility:
+  request_path:
+    id: request_path
+    pages: "/content/daily-prayer\r\n/content/monday-prayer\r\n/content/tuesday-prayer\r\n/content/wednesday-prayer\r\n/content/thursday-prayer\r\n/content/friday-prayer\r\n/content/saturday-prayer\r\n/content/sunday-prayer\r\n"
+    negate: true

@@ -1,0 +1,27 @@
+uuid: ca327d11-d28a-4e7e-b00a-53e504303694
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - shechem
+id: shechem_eventsintro
+theme: shechem
+region: content
+weight: -1
+provider: null
+plugin: 'block_content:c21d292f-1334-4ffa-bf17-83508a0a203e'
+settings:
+  id: 'block_content:c21d292f-1334-4ffa-bf17-83508a0a203e'
+  label: 'Events intro'
+  provider: block_content
+  label_display: '0'
+  status: true
+  info: ''
+  view_mode: full
+visibility:
+  request_path:
+    id: request_path
+    pages: /events
+    negate: false

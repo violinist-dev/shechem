@@ -1,0 +1,22 @@
+uuid: 25c99bb3-e494-44f9-998d-a9a6aecf140d
+langcode: en
+status: true
+dependencies:
+  theme:
+    - shechem
+_core:
+  default_config_hash: X9I1OB0W3WlWtrK-CNcg6hNWwa8wficanpH8pYnDZDE
+id: shechem_local_tasks
+theme: shechem
+region: content
+weight: -5
+provider: null
+plugin: local_tasks_block
+settings:
+  id: local_tasks_block
+  label: Tabs
+  provider: core
+  label_display: '0'
+  primary: true
+  secondary: true
+visibility: {  }
