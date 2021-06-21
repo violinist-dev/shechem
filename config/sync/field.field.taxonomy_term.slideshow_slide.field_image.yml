@@ -1,0 +1,29 @@
+uuid: 1990e363-2063-462a-9b79-f29c5aa77976
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_image
+    - media.type.image
+    - taxonomy.vocabulary.slideshow_slide
+id: taxonomy_term.slideshow_slide.field_image
+field_name: field_image
+entity_type: taxonomy_term
+bundle: slideshow_slide
+label: Image
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:media'
+  handler_settings:
+    target_bundles:
+      image: image
+    sort:
+      field: status
+      direction: DESC
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

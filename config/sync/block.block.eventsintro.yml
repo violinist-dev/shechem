@@ -12,7 +12,7 @@ dependencies:
 id: eventsintro
 theme: bartik
 region: content
-weight: 0
+weight: -1
 provider: null
 plugin: 'block_content:c21d292f-1334-4ffa-bf17-83508a0a203e'
 settings:

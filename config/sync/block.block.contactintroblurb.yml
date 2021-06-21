@@ -12,7 +12,7 @@ dependencies:
 id: contactintroblurb
 theme: bartik
 region: content
-weight: 0
+weight: -2
 provider: null
 plugin: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
 settings:

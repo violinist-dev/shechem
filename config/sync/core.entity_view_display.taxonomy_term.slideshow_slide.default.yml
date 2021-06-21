@@ -1,0 +1,23 @@
+uuid: bdc1f616-16a5-42a1-b935-26457ace3c35
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.taxonomy_term.slideshow_slide.field_image
+    - taxonomy.vocabulary.slideshow_slide
+id: taxonomy_term.slideshow_slide.default
+targetEntityType: taxonomy_term
+bundle: slideshow_slide
+mode: default
+content:
+  field_image:
+    type: entity_reference_entity_view
+    weight: 0
+    label: hidden
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+    region: content
+hidden:
+  description: true

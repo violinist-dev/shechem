@@ -1,0 +1,8 @@
+uuid: 794f0525-28e5-493d-92c7-c8225937aebc
+langcode: en
+status: true
+dependencies: {  }
+name: 'Slideshow slide'
+vid: slideshow_slide
+description: ''
+weight: 0

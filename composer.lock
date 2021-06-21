@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "05da29c25243e1f8dbde4e4363fe2187",
+    "content-hash": "a4606871798bbf438e14f862be175e9c",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -61,6 +61,21 @@
                 "source": "https://github.com/asm89/stack-cors/tree/1.3.0"
             },
             "time": "2019-12-24T22:41:47+00:00"
+        },
+        {
+            "name": "bower-asset/jquery-cycle",
+            "version": "3.0.3",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:malsup/cycle.git",
+                "reference": "ac38c7b63d3723860187c5168e1d945fca66e15a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/malsup/cycle/zipball/ac38c7b63d3723860187c5168e1d945fca66e15a",
+                "reference": "ac38c7b63d3723860187c5168e1d945fca66e15a"
+            },
+            "type": "bower-asset"
         },
         {
             "name": "chi-teck/drupal-code-generator",
@@ -2074,6 +2089,69 @@
             }
         },
         {
+            "name": "drupal/views_slideshow",
+            "version": "4.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/views_slideshow.git",
+                "reference": "8.x-4.8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/views_slideshow-8.x-4.8.zip",
+                "reference": "8.x-4.8",
+                "shasum": "88104843df5e2eaa7e70b796a80573d844583e42"
+            },
+            "require": {
+                "drupal/core": "^8 || ^9"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "8.x-4.8",
+                    "datestamp": "1601309225",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Neslee Canil Pinto",
+                    "homepage": "https://www.drupal.org/u/neslee-canil-pinto",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "NickDickinsonWilde",
+                    "homepage": "https://www.drupal.org/user/3094661"
+                },
+                {
+                    "name": "aaron",
+                    "homepage": "https://www.drupal.org/user/33420"
+                },
+                {
+                    "name": "redndahead",
+                    "homepage": "https://www.drupal.org/user/160320"
+                },
+                {
+                    "name": "vbouchet",
+                    "homepage": "https://www.drupal.org/user/1671428"
+                }
+            ],
+            "description": "Describes relationships between entities.",
+            "homepage": "https://www.drupal.org/project/views_slideshow",
+            "support": {
+                "source": "https://git.drupalcode.org/project/views_slideshow",
+                "issues": "https://www.drupal.org/project/issues/views_slideshow",
+                "irc": "irc://irc.freenode.org/drupal-contribute"
+            }
+        },
+        {
             "name": "drush/drush",
             "version": "10.5.0",
             "source": {
@@ -3222,6 +3300,18 @@
                 "source": "https://github.com/nikic/PHP-Parser/tree/v4.10.5"
             },
             "time": "2021-05-03T19:11:20+00:00"
+        },
+        {
+            "name": "npm-asset/serialize-cyclic-json",
+            "version": "0.0.1",
+            "dist": {
+                "type": "tar",
+                "url": "https://registry.npmjs.org/serialize-cyclic-json/-/serialize-cyclic-json-0.0.1.tgz"
+            },
+            "type": "npm-asset",
+            "license": [
+                "SEE LICENSE IN cycle.js"
+            ]
         },
         {
             "name": "oomphinc/composer-installers-extender",

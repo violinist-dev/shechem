@@ -1,0 +1,45 @@
+uuid: e407d3e8-7a7f-47ef-8562-0f6a84097bc1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.taxonomy_term.slideshow_slide.field_image
+    - taxonomy.vocabulary.slideshow_slide
+  module:
+    - media_library
+    - path
+id: taxonomy_term.slideshow_slide.default
+targetEntityType: taxonomy_term
+bundle: slideshow_slide
+mode: default
+content:
+  field_image:
+    type: media_library_widget
+    weight: 1
+    settings:
+      media_types: {  }
+    third_party_settings: {  }
+    region: content
+  name:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    settings:
+      display_label: true
+    weight: 3
+    region: content
+    third_party_settings: {  }
+hidden:
+  description: true
