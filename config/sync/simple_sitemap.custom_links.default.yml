@@ -1,0 +1,13 @@
+links:
+  -
+    path: /
+    priority: '1.0'
+    changefreq: monthly
+  -
+    path: /news
+    priority: '0.8'
+    changefreq: weekly
+  -
+    path: /events
+    priority: '0.8'
+    changefreq: weekly
