@@ -46,3 +46,14 @@ blockquote {
   margin: 0 auto;
   text-align: center;
 }
+
+.region-header {
+  display: flex;
+  flex-flow: row wrap;
+}
+.region-header .block.search-block-form {
+  margin-left: auto;
+}
+.region-header .search-block-form {
+  float: none;
+}
