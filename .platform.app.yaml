@@ -155,5 +155,4 @@ crons:
     # Run Drupal's cron tasks every 3 hours.
     drupal:
         spec: '0 */3 * * *'
-        cmd: |
-          cd web; drush core-cron
+        cmd: 'cd webroot ; drush core-cron'
