@@ -153,6 +153,6 @@ web:
 
 crons:
     # Run Drupal's cron tasks every 3 hours.
-    drupal:
+    shechemdrupal:
         spec: '58 */3 * * *'
         cmd: 'cd web; drush core-cron'
