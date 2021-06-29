@@ -23,8 +23,10 @@
         "composer/installers": "^1.9",
         "cweagans/composer-patches": "^1.7.0",
         "drupal/admin_toolbar": "^3.0.1",
+        "drupal/captcha": "^1.1.0",
         "drupal/core-composer-scaffold": "^9.2",
         "drupal/core-recommended": "^9.2",
+        "drupal/honeypot": "^2.0.0",
         "drupal/pathauto": "^1.8",
         "drupal/redirect": "^1.6",
         "drupal/simple_sitemap": "^3.10",
@@ -92,22 +94,7 @@
         "composer-exit-on-patch-failure": true,
         "patchLevel": {
             "drupal/core": "-p2",
-            "drupal/admin_toolbar": "-p1",
-            "drupal/commerce": "-p1",
-            "drupal/commerce_migrate": "-p1",
-            "drupal/entity_reference_revisions": "-p1",
-            "drupal/eu_cookie_compliance": "-p1",
-            "drupal/facets": "-p1",
-            "drupal/field_group": "-p1",
-            "drupal/honeypot": "-p1",
-            "drupal/metatag": "-p1",
-            "drupal/recaptcha": "-p1",
-            "drupal/redirect": "-p1",
-            "drupal/search_api": "-p1",
-            "drupal/search_api_solr": "-p1",
-            "drupal/sitemap": "-p1",
-            "drupal/smart_trim": "-p1",
-            "drupal/webform_migrate": "-p1"
+            "drupal/honeypot": "-p1"
         },
         "patches": {
             "drupal/core": {
@@ -115,6 +102,9 @@
                 "Include dependencies for all instances of formatters": "https://www.drupal.org/files/issues/2019-04-08/entity-display-dependencies-2865710-51-without-tests.patch",
                 "Fix serializing form state for batches etc": "https://www.drupal.org/files/issues/2019-10-07/drupal-batchstorage-unserialize-formstate-3055287-19.patch",
                 "Contextual links need invalidating": "https://www.drupal.org/files/issues/2021-02-16/2773591-38.patch"
+            },
+            "drupal/honeypot": {
+                "Better results if honeypot-field is placed as first field": "https://www.drupal.org/files/issues/2019-08-08/honeypot_field_weight_2811189-18.patch"
             }
         },
         "composer-version": "^1.10.7 || ^2.0.7"
