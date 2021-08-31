@@ -107,6 +107,9 @@
                 "Better results if honeypot-field is placed as first field": "https://www.drupal.org/files/issues/2019-08-08/honeypot_field_weight_2811189-18.patch"
             }
         },
-        "composer-version": "^1.10.7 || ^2.0.7"
+        "composer-version": "^1.10.7 || ^2.0.7",
+        "violinist": {
+            "security_updates_only": 1
+        }
     }
 }
