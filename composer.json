@@ -109,6 +109,9 @@
         },
         "composer-version": "^1.10.7 || ^2.0.7",
         "violinist": {
+            "blacklist": [
+                "drupal/core-composer-scaffold"
+            ],
             "security_updates_only": 1
         }
     }
