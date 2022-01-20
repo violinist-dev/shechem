@@ -18,13 +18,13 @@ plugin: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
 settings:
   id: 'block_content:bb87fd6b-3b4e-40c0-a3ed-fb2739b1f6b9'
   label: 'Contact intro blurb'
-  provider: block_content
   label_display: '0'
+  provider: block_content
   status: true
   info: ''
   view_mode: full
 visibility:
   request_path:
     id: request_path
-    pages: "/contact/*\r\n/contact"
     negate: false
+    pages: "/contact/*\r\n/contact"
