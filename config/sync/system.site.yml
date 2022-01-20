@@ -1,3 +1,6 @@
+_core:
+  default_config_hash: yTxtFqBHnEWxQswuWvkjE8mKw2t8oKuCL1q8KnfHuGE
+langcode: en
 uuid: e6858074-1935-4cbc-aa94-a39b0125abc0
 name: 'Shechem community'
 mail: shechem.community@gmail.com
@@ -8,8 +11,5 @@ page:
   front: /node/1
 admin_compact_mode: false
 weight_select_max: 100
-langcode: en
 default_langcode: en
-_core:
-  default_config_hash: yTxtFqBHnEWxQswuWvkjE8mKw2t8oKuCL1q8KnfHuGE
 mail_notification: ''

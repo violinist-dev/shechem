@@ -17,8 +17,8 @@ plugin: 'block_content:718cc203-c16c-47aa-a33b-e16a71d58f28'
 settings:
   id: 'block_content:718cc203-c16c-47aa-a33b-e16a71d58f28'
   label: 'Powered by Drupal + ComputerMinds'
-  provider: block_content
   label_display: '0'
+  provider: block_content
   status: true
   info: ''
   view_mode: full
